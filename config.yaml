@@ -1,0 +1,22 @@
+fastq_dir: /bucket/PigolottiU/florian-pflug/CultureComparison/fastq
+out_dir: /bucket/PigolottiU/florian-pflug/CultureComparison/bam
+tmp_dir: /flash/PigolottiU/florian-pflug/tmp
+cores: 8
+memory: 8
+genome: /genome
+read1_file: '{fastq_dir}/{sample}_L002_R1_001.fastq.gz'
+read2_file: '{fastq_dir}/{sample}_L002_R2_001.fastq.gz'
+bam_file: '{out_dir}/{sample}.bam'
+map_cmd: |
+  set -o pipefail
+  
+  bwa mem -t {cores} "{genome}" \
+    -o >(
+      rm -f "{bam_file}.in-progress"
+      samtools sort --threads {cores} -m {memory} \
+        -T {tmp_dir}/{sample}.samtools-sort. \
+        -O BAM -l 7 -o "{bam_file}.in-progress" -
+      mv "{bam_file}.in-progress" "{bam_file}")
+    <(zcat "{read1_file}" \
+    <(zcat "{read2_file}" \
+    2> "{out_dir}/{sample}.bwa.log"
