@@ -1,22 +1,36 @@
-fastq_dir: /bucket/PigolottiU/florian-pflug/CultureComparison/fastq
-out_dir: /bucket/PigolottiU/florian-pflug/CultureComparison/bam
-tmp_dir: /flash/PigolottiU/florian-pflug/tmp
+fastq_dir: fastq
+out_dir: bam
+tmp_dir: /tmp
+genome_file: genomes/EColi-K12-MG1655.fna
+genome_index: genomes/EColi-K12-MG1655.fna
+genome_circular: True
 cores: 8
 memory: 8
-genome: /genome
 read1_file: '{fastq_dir}/{sample}_L002_R1_001.fastq.gz'
 read2_file: '{fastq_dir}/{sample}_L002_R2_001.fastq.gz'
 bam_file: '{out_dir}/{sample}.bam'
+bam_index_file: '{out_dir}/{sample}.bai'
+mappability_file: '{out_dir}/{sample}.mappability.bed'
+stats_file: '{out_dir}/{sample}.stats'
+shell: /bin/bash
 map_cmd: |
+  set -e
   set -o pipefail
   
-  bwa mem -t {cores} "{genome}" \
-    -o >(
-      rm -f "{bam_file}.in-progress"
-      samtools sort --threads {cores} -m {memory} \
+  rm -f "{bam_file}.in-progress"
+  bwa mem -t {cores} -v 1 "{genome_index}" \
+    <(exec zcat "{read1_file}") \
+    <(exec zcat "{read2_file}") \
+    | samtools sort --threads {cores} -m {memory}g \
         -T {tmp_dir}/{sample}.samtools-sort. \
-        -O BAM -l 7 -o "{bam_file}.in-progress" -
-      mv "{bam_file}.in-progress" "{bam_file}")
-    <(zcat "{read1_file}" \
-    <(zcat "{read2_file}" \
-    2> "{out_dir}/{sample}.bwa.log"
+        -O BAM -l 7 -o "{bam_file}.in-progress" \
+        -
+  mv "{bam_file}.in-progress" "{bam_file}"
+index_cmd: |
+  samtools index "{bam_file}" "{bam_index_file}"
+mappability_cmd: |
+  ./mappability.py "{genome_file}" "{genome_circular}" \
+    "$(grep insert_size "{stats_file}" | cut -f 2)" \
+    "$(grep read_length "{stats_file}" | cut -f 2)" \
+    "{mappability_file}" \
+    -v 1

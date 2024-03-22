@@ -10,12 +10,12 @@ from collections import defaultdict
 
 # Command-line arguments
 GENOME = sys.argv[1]
-CIRCULAR = False
-FRAGMENTLENGTH = int(sys.argv[2])
-READLENGTH = int(sys.argv[3])
+CIRCULAR = bool(sys.argv[2])
+FRAGMENTLENGTH = int(sys.argv[3])
+READLENGTH = int(sys.argv[4])
 DISPLACEMENT = 1
-OUTPUT = sys.argv[4]
-BWA_ARGS = sys.argv[5:]
+OUTPUT = sys.argv[5]
+BWA_ARGS = sys.argv[6:]
 VERBOSE = False
 
 BWA = subprocess.Popen(
