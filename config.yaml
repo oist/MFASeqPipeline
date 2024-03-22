@@ -10,8 +10,9 @@ read1_file: '{fastq_dir}/{sample}_L002_R1_001.fastq.gz'
 read2_file: '{fastq_dir}/{sample}_L002_R2_001.fastq.gz'
 bam_file: '{out_dir}/{sample}.bam'
 bam_index_file: '{out_dir}/{sample}.bai'
-mappability_file: '{out_dir}/{sample}.mappability.bed'
 stats_file: '{out_dir}/{sample}.stats'
+mappability_file: '{out_dir}/{sample}.mappability.bed'
+abundance_file: '{out_dir}/{sample}.abd'
 shell: /bin/bash
 map_cmd: |
   set -e
@@ -33,4 +34,6 @@ mappability_cmd: |
     "$(grep insert_size "{stats_file}" | cut -f 2)" \
     "$(grep read_length "{stats_file}" | cut -f 2)" \
     "{mappability_file}" \
-    -v 1
+    -t {cores} -v 1
+abundance_cmd: |
+  ./abundance.py "{bam_file}" "{mappability_file}" "{abundance_file}"
