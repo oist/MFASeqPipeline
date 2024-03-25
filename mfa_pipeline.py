@@ -66,7 +66,10 @@ def expand(value, cfg=CFG):
 
 # Keep track for each file whether the newest version is in tmp
 TEMPFILES = {}
-atexit.register(lambda: [ os.remove(f) for n,f in TEMPFILES if os.path.exists(f) ])
+atexit.register(lambda: [ os.remove(f) for f in TEMPFILES.values() if os.path.exists(f) ])
+
+# Decide where to send the step's stdout
+step_stdout = sys.stdout if ARGS.verbose else open(os.devnull, "w")
 
 # Execute steps
 for step_name in CFG["steps"]:
@@ -94,13 +97,13 @@ for step_name in CFG["steps"]:
     input_files = [expand(CFG[f]) for f in input_names]
     output_files = [expand(CFG[f]) for f in output_names]
     
-    if ARGS.verbose:
-        print("    input:")
-        for f in input_files:
-            print(f"         - {f}")
-        print("    output:")
-        for f in output_files:
-            print(f"         - {f}")
+    # Report input and output files
+    print("    input:")
+    for f in input_files:
+        print(f"         - {f}")
+    print("    output:")
+    for f in output_files:
+        print(f"         - {f}")
     
     # Check if the step needs to be executed
     if all([os.path.exists(f) for f in output_files]):
@@ -163,7 +166,7 @@ for step_name in CFG["steps"]:
         if ARGS.verbose:
             print(f"    executor: {execute_cmd}")
             print(f"    running step ...")
-        subprocess.run(execute_cmd, shell=True, executable=cfg["shell"], check=True)
+        subprocess.run(execute_cmd, shell=True, executable=cfg["shell"], stdout=step_stdout, check=True)
         if ARGS.verbose:
             print(f"    ... step completed")
     finally:
