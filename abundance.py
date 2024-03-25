@@ -1,4 +1,6 @@
+#!/usr/bin/env python3
 import sys
+import io
 import numpy
 import pyngstuff
 import pysam
@@ -61,6 +63,10 @@ def read_mappability(mappabilityfile, seqlength):
             mappability[seq].add(Interval(start, end))
     return mappability
 
+# Make output unbuffered
+sys.stdout = io.TextIOWrapper(open(sys.stdout.fileno(), 'wb', 0), write_through=True)
+
+# Command-line arguments
 SAMPLE_BAM_FILE = sys.argv[1]
 SAMPLE_MAPPABILITY_FILE = sys.argv[2]
 REFERENCE_BAM_FILE = sys.argv[3]
@@ -69,6 +75,7 @@ RESOLUTION = int(sys.argv[5])
 PADDING = int(sys.argv[6])
 ABUNDANCE_FILE = sys.argv[7]
 
+# Read data
 print(f"Reading sample BAM {SAMPLE_BAM_FILE}")
 SAMPLE_COVERAGE, SAMPLE_SEQLENGTHS = read_bam(SAMPLE_BAM_FILE)
 
@@ -79,6 +86,7 @@ print(f"Reading mappabilities {SAMPLE_MAPPABILITY_FILE}, {REFERENCE_MAPPABILITY_
 SAMPLE_MAPPABILITY = read_mappability(SAMPLE_MAPPABILITY_FILE, SAMPLE_SEQLENGTHS)
 REFERENCE_MAPPABILITY = read_mappability(REFERENCE_MAPPABILITY_FILE, REFERENCE_SEQLENGTHS)
 
+# Compute
 print(f"Finding mappable grid points for grid size {RESOLUTION}bp")
 GRID = { seq: numpy.arange(start=0, stop=length, step=RESOLUTION) for seq, length in SAMPLE_SEQLENGTHS.items() }
 SAMPLE_MAPPABLE = { seq: numpy.array([ not SAMPLE_MAPPABILITY[seq].overlaps(i-PADDING, i+PADDING+1)
@@ -96,6 +104,7 @@ REF = { seq: numpy.where(REFERENCE_MAPPABLE[seq], REFERENCE_COVERAGE[seq].covera
 RATIO = { seq: SAMPLE[seq] / REF[seq] for seq in SAMPLE.keys() }
 STDDEV = { seq: ratios * numpy.sqrt(1.0 / SAMPLE[seq] + 1.0 / REF[seq]) for seq, ratios in RATIO.items() }
 
+# Output results
 SLEN = max([len(seq) for seq, _ in GRID.items() ])
 COLS = [('seq', f"U{SLEN}"), ('pos', numpy.int32), ("sample", numpy.float64), ("reference", numpy.float64),
         ("ratio", numpy.float64), ("stddev", numpy.float64)]

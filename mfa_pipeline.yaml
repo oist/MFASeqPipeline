@@ -8,29 +8,33 @@ out_dir: '{project_dir}/results'
 genome_file: /home/f/florian-pflug/Versioned/OIST/replication/data/EColi-K12-MG1655.fna
 genome_index_prefix: /home/f/florian-pflug/Versioned/OIST/replication/data/EColi-K12-MG1655.fna
 genome_circular: True
+abundance_resolution_bp: 1000
 cores: 16
 memory_map_gb: 16
 memory_sort_gb: 16
 read1_file: '{fastq_dir}/{sample}_L002_R1_001.fastq.gz'
 read2_file: '{fastq_dir}/{sample}_L002_R2_001.fastq.gz'
 bam_file: '{out_dir}/{sample}.bam'
+reference_bam_file: '{out_dir}/{reference}.bam'
 bam_index_file: '{out_dir}/{sample}.bai'
 stats_file: '{out_dir}/{sample}.stats'
 mappability_file: '{out_dir}/{sample}.mappability.bed'
+reference_mappability_file: '{out_dir}/{reference}.mappability.bed'
 abundance_file: '{out_dir}/{sample}.abd'
 shell: /bin/bash
 execute_cmd: srun -p compute --mem={step_memory_gb}G -c {step_cores} {script_file}
 steps:
   - map
-  - index
-  - mapping_statistics
+  - mapstats
   - mappability
+  - abundance
 map_step:
   input:
     - read1_file
     - read2_file
   output:
     - bam_file
+    - bam_index_file
   override:
     step_cores: '{cores}'
     step_memory_gb: '$[{memory_map_gb}+{memory_sort_gb}]'
@@ -47,17 +51,8 @@ map_step:
           -O BAM -l 7 -o "{bam_file}.in-progress" \
           -
     mv "{bam_file}.in-progress" "{bam_file}"
-index_step:
-  input:
-    - bam_file
-  output:
-    - bam_index_file
-  override:
-    step_cores: '{cores}'
-    step_memory_gb: 8
-  script: |
     samtools index -@ {step_cores} "{bam_file}" "{bam_index_file}"
-mapping_statistics_step:
+mapstats_step:
   input:
     - bam_file
     - bam_index_file
@@ -86,11 +81,18 @@ mappability_step:
 abundance_step:
   input:
     - bam_file
+    - stats_file
     - mappability_file
+    - reference_bam_file
+    - reference_mappability_file
   output:
      - abundance_file
   override:
     step_cores: 1
     step_memory_gb: 8
   script: |
-    ./abundance.py "{bam_file}" "{mappability_file}" "{abundance_file}"
+    ./abundance.py \
+      "{bam_file}" "{mappability_file}" \
+      "{reference_bam_file}" "{reference_mappability_file}" \
+      "{abundance_resolution_bp}" "$(grep insert_size "{stats_file}" | cut -f 2)" \
+      "{abundance_file}"

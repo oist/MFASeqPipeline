@@ -29,6 +29,7 @@ parser = argparse.ArgumentParser(
 
 parser.add_argument("--config", default="mfa_pipeline.yaml", help="Config file in YAML format")
 parser.add_argument("--verbose", default=False, action=argparse.BooleanOptionalAction)
+parser.add_argument("--steps", action="store", type=lambda s: s.split(","), help="steps to run")
 parser.add_argument("sample", help="Sample name")
 
 # Parse command-line arguments
@@ -36,19 +37,17 @@ ARGS, overrides = parser.parse_known_args()
 with open(ARGS.config, "r") as cfg:
     CFG = yaml.safe_load(cfg)
 
-CFG["sample"] = ARGS.sample
+if ARGS.sample is not None:
+    CFG["sample"] = ARGS.sample
+
+if ARGS.steps is not None:
+    CFG["steps"] = ARGS.steps
 
 # Extra command-line arguments override config
 while len(overrides) > 0:
     arg = overrides.pop()
-    if not arg.startswith("--"):
-      raise ArgumentError(f"invalid argument {arg}")
-    key = arg[2:-1]
-    if len(overrides) == 0:
-      raise ArgumentError(f"no value provided for {arg}")
-    value = overrides.pop()
+    key, value = arg.split("=")
     CFG[key] = value
-
 
 # Function to expand configuration settings
 def expand(value, cfg=CFG):
