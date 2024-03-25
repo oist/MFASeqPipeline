@@ -1,0 +1,97 @@
+project: CultureComparison
+base_dir: /bucket/PigolottiU/florian-pflug
+tmp_base_dir: /flash/PigolottiU/florian-pflug/tmp/
+project_dir: '{base_dir}/{project}'
+tmp_dir: '{tmp_base_dir}/{project}'
+fastq_dir: '{project_dir}/fastq'
+out_dir: '{project_dir}/results'
+genome_file: /home/f/florian-pflug/Versioned/OIST/replication/data/EColi-K12-MG1655.fna
+genome_index_prefix: /home/f/florian-pflug/Versioned/OIST/replication/data/EColi-K12-MG1655.fna
+genome_circular: True
+cores: 16
+memory_map_gb: 16
+memory_sort_gb: 16
+read1_file: '{fastq_dir}/{sample}_L002_R1_001.fastq.gz'
+read2_file: '{fastq_dir}/{sample}_L002_R2_001.fastq.gz'
+bam_file: '{out_dir}/{sample}.bam'
+bam_index_file: '{out_dir}/{sample}.bai'
+stats_file: '{out_dir}/{sample}.stats'
+mappability_file: '{out_dir}/{sample}.mappability.bed'
+abundance_file: '{out_dir}/{sample}.abd'
+shell: /bin/bash
+execute_cmd: srun -p compute --mem={step_memory_gb}G -c {step_cores} {script_file}
+steps:
+  - map
+  - index
+  - mapping_statistics
+  - mappability
+  - abundance
+map_step:
+  input:
+    - read1_file
+    - read2_file
+  output:
+    - bam_file
+  override:
+    step_cores: '{cores}'
+    step_memory_gb: '$[{memory_map_gb}+{memory_sort_gb}]'
+  script: |
+    set -e
+    set -o pipefail
+    
+    rm -f "{bam_file}.in-progress"
+    bwa mem -t {step_cores} -v 1 "{genome_index_prefix}" \
+      <(exec zcat "{read1_file}") \
+      <(exec zcat "{read2_file}") \
+      | samtools sort --threads {step_cores} -m {memory_sort_gb}g \
+          -T {tmp_dir}/{sample}.samtools-sort. \
+          -O BAM -l 7 -o "{bam_file}.in-progress" \
+          -
+    mv "{bam_file}.in-progress" "{bam_file}"
+index_step:
+  input:
+    - bam_file
+  output:
+    - bam_index_file
+  override:
+    step_cores: '{cores}'
+    step_memory_gb: 8
+  script: |
+    samtools index -@ {step_cores} "{bam_file}" "{bam_index_file}"
+mapping_statistics_step:
+  input:
+    - bam_file
+    - bam_index_file
+  output:
+    - stats_file
+  override:
+    step_cores: 1
+    step_memory_gb: 8
+  script: |
+    ./mapping_statistics.py "{bam_file}" "{stats_file}"
+mappability_step:
+  input:
+    - genome_file
+    - stats_file
+  output:
+    - mappability_file
+  override:
+    step_cores: 1
+    step_memory_gb: '{memory_map_gb}'
+  script: |
+    ./mappability.py "{genome_file}" "{genome_index_prefix}" "{genome_circular}" \
+      "$(grep insert_size "{stats_file}" | cut -f 2)" \
+      "$(grep read_length "{stats_file}" | cut -f 2)" \
+      "{mappability_file}" \
+      -t {step_cores} -v 1
+abundance_step:
+  input:
+    - bam_file
+    - mappability_file
+  output:
+     - abundance_file
+  override:
+    step_cores: 1
+    step_memory_gb: 8
+  script: |
+    ./abundance.py "{bam_file}" "{mappability_file}" "{abundance_file}"

@@ -10,16 +10,17 @@ from collections import defaultdict
 
 # Command-line arguments
 GENOME = sys.argv[1]
-CIRCULAR = bool(sys.argv[2])
-FRAGMENTLENGTH = int(sys.argv[3])
-READLENGTH = int(sys.argv[4])
+GENOME_INDEX = sys.argv[2]
+CIRCULAR = bool(sys.argv[3])
+FRAGMENTLENGTH = int(sys.argv[4])
+READLENGTH = int(sys.argv[5])
 DISPLACEMENT = 1
-OUTPUT = sys.argv[5]
-BWA_ARGS = sys.argv[6:]
+OUTPUT = sys.argv[6]
+BWA_ARGS = sys.argv[7:]
 VERBOSE = False
 
 BWA = subprocess.Popen(
-    ["bwa", "mem"] + BWA_ARGS + ["-p"] + [GENOME, "-"],
+    ["bwa", "mem"] + BWA_ARGS + ["-p"] + [GENOME_INDEX, "-"],
     stdin=subprocess.PIPE, stdout=subprocess.PIPE,
     shell=False, encoding="ASCII"
 )
