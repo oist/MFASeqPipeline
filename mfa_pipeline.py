@@ -44,6 +44,7 @@ while len(overrides) > 0:
     value = overrides.pop()
     CFG[key] = value
 
+
 # Function to expand configuration settings
 def expand(value, cfg=CFG):
     if isinstance(value, str):
@@ -56,15 +57,11 @@ def expand(value, cfg=CFG):
             vp = value.format_map(cfg)
             i += 1
     return value
-  
-# Steps
-STEPS = [ "map", "index", "mapping_statistics", "mappability", "abundance" ]
+
 
 # Keep track for each file whether the newest version is in tmp
 TEMPFILES = {}
-def tempfiles_cleanup():
-    pass
-atexit.register(tempfiles_cleanup)
+atexit.register(lambda: [ os.remove(f) for f in TEMPFILES])
 
 # Execute steps
 for step_name in STEPS:
@@ -78,7 +75,7 @@ for step_name in STEPS:
     # as the first entry of the dictionary chain we use for lookups and updates
     step = CFG[f"{step_name}_step"]
     if not isinstance(step, dict):
-      raise ConfigurationError(f"step {step_name} is not properly defined")
+        raise ConfigurationError(f"step {step_name} is not properly defined")
     cfg = ChainMap({}, step["override"], CFG)
 
     # Get upper-case step name, input and output files, and step script
@@ -88,7 +85,7 @@ for step_name in STEPS:
     
     # Get expanded input and output file names
     # NOTE: Expansion takes place in the *global* context, since the names
-     # are supposed to agree between different steps
+    # are supposed to agree between different steps
     input_files = [expand(CFG[f]) for f in input_names]
     output_files = [expand(CFG[f]) for f in output_names]
     
@@ -106,7 +103,7 @@ for step_name in STEPS:
     
     # Copy input files to tmp and update config accordingly
     for input_name in input_names:
-        # Copy file to tmp dir unless that's were the current version is
+        # Copy file to tmp dir unless that's where the current version is
         # NOTE: Expansion happens in the *global* context here. For the input file the
         # reason is again that the expansion must agree between steps. For the temp file
         # we could in principle allow step-specific overrides, but then the name of the
@@ -143,8 +140,8 @@ for step_name in STEPS:
         # NOTE: We use the *local* context in the expansions here, i.e. allow step-specific overrides
         cfg["script_file"] = os.path.join(expand(cfg["tmp_dir"], cfg), f"{step_name}.sh")
         with open(cfg["script_file"], "w+") as f:
-          f.write("#!{shell}\n".format_map(cfg))
-          f.write(expand(script, cfg))
+            f.write("#!{shell}\n".format_map(cfg))
+            f.write(expand(script, cfg))
         os.chmod(cfg["script_file"], 0o755)
         
         # Run script
@@ -156,13 +153,13 @@ for step_name in STEPS:
     
     # Copy output files from tmp
     for output_name in output_names:
-       temp_file = TEMPFILES[output_name]
-       output_file = expand(CFG[output_name])
-       if not os.path.exists(temp_file):
-           raise ExecutionError(f"step failed to produce {temp_file}")
-       print(f"    copying {temp_file}")
-       print(f"    to {output_file} ...")
-       os.makedirs(os.path.dirname(output_file), exist_ok=True)
-       shutil.copy(temp_file, output_file)
+        temp_file = TEMPFILES[output_name]
+        output_file = expand(CFG[output_name])
+        if not os.path.exists(temp_file):
+            raise ExecutionError(f"step failed to produce {temp_file}")
+        print(f"    copying {temp_file}")
+        print(f"    to {output_file} ...")
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
+        shutil.copy(temp_file, output_file)
 
     print(f"    done.")
