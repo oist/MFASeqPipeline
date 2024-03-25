@@ -2,7 +2,7 @@ project: CultureComparison
 base_dir: /bucket/PigolottiU/florian-pflug
 tmp_base_dir: /flash/PigolottiU/florian-pflug/tmp/
 project_dir: '{base_dir}/{project}'
-tmp_dir: '{tmp_base_dir}/{project}'
+tmp_dir: '{tmp_base_dir}/{project}/{sample}/'
 fastq_dir: '{project_dir}/fastq'
 out_dir: '{project_dir}/results'
 genome_file: /home/f/florian-pflug/Versioned/OIST/replication/data/EColi-K12-MG1655.fna
@@ -15,8 +15,9 @@ memory_sort_gb: 16
 read1_file: '{fastq_dir}/{sample}_L002_R1_001.fastq.gz'
 read2_file: '{fastq_dir}/{sample}_L002_R2_001.fastq.gz'
 bam_file: '{out_dir}/{sample}.bam'
-reference_bam_file: '{out_dir}/{reference}.bam'
 bam_index_file: '{out_dir}/{sample}.bai'
+reference_bam_file: '{out_dir}/{reference}.bam'
+reference_bam_index_file: '{out_dir}/{reference}.bai'
 stats_file: '{out_dir}/{sample}.stats'
 mappability_file: '{out_dir}/{sample}.mappability.bed'
 reference_mappability_file: '{out_dir}/{reference}.mappability.bed'
@@ -81,9 +82,11 @@ mappability_step:
 abundance_step:
   input:
     - bam_file
+    - bam_index_file
     - stats_file
     - mappability_file
     - reference_bam_file
+    - reference_bam_index_file
     - reference_mappability_file
   output:
      - abundance_file
