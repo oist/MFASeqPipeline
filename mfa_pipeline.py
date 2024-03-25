@@ -5,6 +5,7 @@ import atexit
 import subprocess
 import sys
 import os
+import io
 import shutil
 from collections import ChainMap
 
@@ -18,12 +19,16 @@ class ConfigurationError(Exception):
 class ExecutionError(Exception):
     pass
 
+# Make output unbuffered
+sys.stdout = io.TextIOWrapper(open(sys.stdout.fileno(), 'wb', 0), write_through=True)
+
 # Argument handling
 parser = argparse.ArgumentParser(
     prog="MFASeqPipeline", 
     description="Process MFA-Seq data")
 
-parser.add_argument("config", help="Config file in YAML format")
+parser.add_argument("--config", default="mfa_pipeline.yaml", help="Config file in YAML format")
+parser.add_argument("--verbose", default=False, action=argparse.BooleanOptionalAction)
 parser.add_argument("sample", help="Sample name")
 
 # Parse command-line arguments
@@ -61,10 +66,10 @@ def expand(value, cfg=CFG):
 
 # Keep track for each file whether the newest version is in tmp
 TEMPFILES = {}
-atexit.register(lambda: [ os.remove(f) for f in TEMPFILES])
+atexit.register(lambda: [ os.remove(f) for n,f in TEMPFILES if os.path.exists(f) ])
 
 # Execute steps
-for step_name in STEPS:
+for step_name in CFG["steps"]:
     title_name = step_name.upper()
     print(f"*** {title_name}")
 
@@ -89,16 +94,18 @@ for step_name in STEPS:
     input_files = [expand(CFG[f]) for f in input_names]
     output_files = [expand(CFG[f]) for f in output_names]
     
-    print("    input:")
-    for f in input_files:
-        print(f"         - {f}")
-    print("    output:")
-    for f in output_files:
-        print(f"         - {f}")
+    if ARGS.verbose:
+        print("    input:")
+        for f in input_files:
+            print(f"         - {f}")
+        print("    output:")
+        for f in output_files:
+            print(f"         - {f}")
     
     # Check if the step needs to be executed
     if all([os.path.exists(f) for f in output_files]):
-        print(f"    all outputs already exists, skipping step...")
+        if ARGS.verbose:
+            print(f"    all outputs already exists, skipping step...")
         continue
     
     # Copy input files to tmp and update config accordingly
@@ -115,8 +122,9 @@ for step_name in STEPS:
             input_file = expand(CFG[input_name])
             temp_file = os.path.join(tmp_dir, os.path.basename(input_file))
             # Copy input file to temp file
-            print(f"    copying {input_file}")
-            print(f"    to {temp_file} ...")
+            if ARGS.verbose:
+                print(f"    copying {input_file}")
+                print(f"    to {temp_file} ...")
             shutil.copyfile(input_file, temp_file)
             TEMPFILES[input_name] = temp_file
         # Update path in cfg
@@ -138,16 +146,26 @@ for step_name in STEPS:
     try:
         # Create script file
         # NOTE: We use the *local* context in the expansions here, i.e. allow step-specific overrides
-        cfg["script_file"] = os.path.join(expand(cfg["tmp_dir"], cfg), f"{step_name}.sh")
+        cfg["script_file"] = os.path.join(expand(cfg["tmp_dir"], cfg), f"{ARGS.sample}-{step_name}.sh")
         with open(cfg["script_file"], "w+") as f:
             f.write("#!{shell}\n".format_map(cfg))
             f.write(expand(script, cfg))
         os.chmod(cfg["script_file"], 0o755)
+        if ARGS.verbose:
+            print(f"    step script:")
+            with open(cfg["script_file"], "r") as f:
+                for l in f.readlines():
+                    l = l.rstrip()
+                    print(f"    | {l}")
         
         # Run script
-        print(f"    running step ...")
         execute_cmd = expand(cfg["execute_cmd"], cfg)
+        if ARGS.verbose:
+            print(f"    executor: {execute_cmd}")
+            print(f"    running step ...")
         subprocess.run(execute_cmd, shell=True, executable=cfg["shell"], check=True)
+        if ARGS.verbose:
+            print(f"    ... step completed")
     finally:
         os.remove(cfg["script_file"])
     
@@ -157,9 +175,11 @@ for step_name in STEPS:
         output_file = expand(CFG[output_name])
         if not os.path.exists(temp_file):
             raise ExecutionError(f"step failed to produce {temp_file}")
-        print(f"    copying {temp_file}")
-        print(f"    to {output_file} ...")
+        if ARGS.verbose:
+            print(f"    copying {temp_file}")
+            print(f"    to {output_file} ...")
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
         shutil.copy(temp_file, output_file)
 
-    print(f"    done.")
+    if ARGS.verbose:
+        print(f"    done.")
