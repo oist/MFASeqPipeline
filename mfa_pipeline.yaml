@@ -83,7 +83,6 @@ abundance_step:
   input:
     - bam_file
     - bam_index_file
-    - stats_file
     - mappability_file
     - reference_bam_file
     - reference_bam_index_file
@@ -97,5 +96,4 @@ abundance_step:
     ./abundance.py \
       "{bam_file}" "{mappability_file}" \
       "{reference_bam_file}" "{reference_mappability_file}" \
-      "{abundance_resolution_bp}" "$(grep insert_size "{stats_file}" | cut -f 2)" \
-      "{abundance_file}"
+      "{abundance_resolution_bp}" "{abundance_file}"
