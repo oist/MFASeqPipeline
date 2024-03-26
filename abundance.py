@@ -163,8 +163,13 @@ SAM_BAM_FILE = sys.argv[1]
 SAM_MAPPABILITY_FILE = sys.argv[2]
 REF_BAM_FILE = sys.argv[3]
 REF_MAPPABILITY_FILE = sys.argv[4]
-WINDOWSIZE = int(sys.argv[5])
+WINDOWSIZE = sys.argv[5]
 ABUNDANCE_FILE = sys.argv[6]
+
+if WINDOWSIZE.endswith("k"):
+    WINDOWSIZE = int(WINDOWSIZE[0:-1]) * 1000
+else:
+    WINDOWSIZE = int(WINDOWSIZE)
 
 # Read data
 print(f"Reading sample BAM {SAM_BAM_FILE}")
