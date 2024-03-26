@@ -180,7 +180,9 @@ for step_name in CFG["steps"]:
         if ARGS.verbose:
             print(f"    copying {temp_file}")
             print(f"    to {output_file} ...")
-        os.makedirs(os.path.dirname(output_file), exist_ok=True)
+        dir_name = os.path.dirname(output_file)
+        if len(dir_name) > 0:
+            os.makedirs(dir_name, exist_ok=True)
         shutil.copy(temp_file, output_file)
 
     if ARGS.verbose:
