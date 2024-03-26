@@ -27,23 +27,32 @@ parser = argparse.ArgumentParser(
     prog="MFASeqPipeline", 
     description="Process MFA-Seq data")
 
-parser.add_argument("--config", default="mfa_pipeline.yaml", help="Config file in YAML format")
+parser.add_argument("config", help="Config file in YAML format")
+parser.add_argument("sample", help="Sample name")
 parser.add_argument("--verbose", default=False, action=argparse.BooleanOptionalAction)
 parser.add_argument("--steps", action="store", type=lambda s: s.split(","), help="steps to run")
-parser.add_argument("sample", help="Sample name")
 
-# Parse command-line arguments
 ARGS, overrides = parser.parse_known_args()
-with open(ARGS.config, "r") as cfg:
-    CFG = yaml.safe_load(cfg)
 
+# Load config
+def load_config(name):
+    with open(f'{name}.yaml', "r") as cfg_file:
+        cfg = yaml.safe_load(cfg_file)
+    if "use" in cfg:
+        base = load_config(cfg["use"])
+        base.update(cfg)
+        cfg = base
+    return cfg
+
+CFG = load_config(ARGS.config)
+
+# Merge command-line arguments into config
 if ARGS.sample is not None:
     CFG["sample"] = ARGS.sample
 
 if ARGS.steps is not None:
     CFG["steps"] = ARGS.steps
 
-# Extra command-line arguments override config
 while len(overrides) > 0:
     arg = overrides.pop()
     key, value = arg.split("=")
