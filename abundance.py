@@ -4,6 +4,7 @@ import io
 import numpy as np
 import pyngstuff
 import pysam
+import gzip
 from intervaltree import IntervalTree, Interval
 
 class Coverage:
@@ -155,6 +156,12 @@ def read_mappability(mappabilityfile, seqlength):
             mappability[seq].add(Interval(start, end))
     return mappability
 
+def open_output(filename: str):
+    if filename.endswith(".gz"):
+        return gzip.open(filename, "wt+")
+    else:
+        return open(filename, "wt+")
+
 # Make output unbuffered
 sys.stdout = io.TextIOWrapper(open(sys.stdout.fileno(), 'wb', 0), write_through=True)
 
@@ -215,7 +222,8 @@ COLS = [('seq', f"U{SLEN}"), ('first', np.int32), ('midpoint', np.float64), ('la
         ("sample_avg", np.float64), ("sample_sd", np.float64), ("sample_avg_stderr", np.float64), ("sample_mappable", np.bool_), 
         ("reference_avg", np.float64), ("reference_sd", np.float64), ("reference_avg_stderr", np.float64), ("reference_mappable", np.bool_), 
         ("ratio", np.float64), ("ratio_stderr", np.float64), ("ratio_mappable", np.bool_) ]
-with (open(ABUNDANCE_FILE, "w+") as f):
+
+with open_output(ABUNDANCE_FILE) as f:
     f.write("\t".join([name for (name, type) in COLS]) + "\n")
     for seq in SAM.keys():
         tab = np.zeros(SAM[seq].shape[0], dtype=COLS)
