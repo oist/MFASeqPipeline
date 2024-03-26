@@ -1,0 +1,9 @@
+project: CultureComparison
+base_dir: /bucket/PigolottiU/florian-pflug
+tmp_base_dir: /flash/PigolottiU/florian-pflug/tmp/
+genome_file: /home/f/florian-pflug/Versioned/OIST/replication/data/EColi-K12-MG1655.fna
+genome_index_prefix: /home/f/florian-pflug/Versioned/OIST/replication/data/EColi-K12-MG1655.fna
+windowsize: 10k
+read1_file: '{fastq_dir}/{sample}_L002_R1_001.fastq.gz'
+read2_file: '{fastq_dir}/{sample}_L002_R2_001.fastq.gz'
+use: mfa_pipeline
