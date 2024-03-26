@@ -8,7 +8,7 @@ out_dir: '{project_dir}/results'
 genome_file: /home/f/florian-pflug/Versioned/OIST/replication/data/EColi-K12-MG1655.fna
 genome_index_prefix: /home/f/florian-pflug/Versioned/OIST/replication/data/EColi-K12-MG1655.fna
 genome_circular: True
-abundance_resolution_bp: 1000
+windowsize: 10k
 cores: 16
 memory_map_gb: 16
 memory_sort_gb: 16
@@ -21,7 +21,7 @@ reference_bam_index_file: '{out_dir}/{reference}.bai'
 stats_file: '{out_dir}/{sample}.stats'
 mappability_file: '{out_dir}/{sample}.mappability.bed'
 reference_mappability_file: '{out_dir}/{reference}.mappability.bed'
-abundance_file: '{out_dir}/{sample}.abd'
+abundance_file: '{out_dir}/{sample}.{windowsize}.gz'
 shell: /bin/bash
 execute_cmd: srun -p compute --mem={step_memory_gb}G -c {step_cores} {script_file}
 steps:
@@ -96,4 +96,4 @@ abundance_step:
     ./abundance.py \
       "{bam_file}" "{mappability_file}" \
       "{reference_bam_file}" "{reference_mappability_file}" \
-      "{abundance_resolution_bp}" "{abundance_file}"
+      "{windowsize}" "{abundance_file}"
