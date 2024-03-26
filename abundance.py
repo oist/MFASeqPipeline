@@ -54,12 +54,16 @@ def window_statistics(cov: Coverage, wsize: int) -> np.ndarray:
     # Get coverage and fragment length
     v = cov.coverage()
     assert v.ndim == 1
-    # Pad to make the number of entries a multiple of wsize
+    # Reshape coverage vector into a matrix where each column is a window
     pad = (-v.shape[0]) % wsize
     v_pad = np.concatenate((v, np.zeros(pad, dtype=v.dtype)))
-    # Reshape into a matrix where each column is a window
     v_win = np.reshape(v_pad, (wsize, -1), order='F')
+    # Create matrix of positions with the same shape
+    i_win = np.reshape(np.arange(start=0, stop=v_win.size), (wsize, -1), order='F')
     # Compute statistics for each window
+    first = np.min(i_win, axis=0)
+    last = np.max(i_win, axis=0)
+    mid = np.average(i_win, axis=0)
     wlen = np.full(v_win.shape[1], fill_value=wsize)
     flen = np.full(v_win.shape[1], fill_value=cov.fragment_length())
     fcov = np.full(v_win.shape[1], fill_value=fragment_coverage(wsize, flen[0]))
@@ -67,11 +71,15 @@ def window_statistics(cov: Coverage, wsize: int) -> np.ndarray:
     sd = np.std(v_win, axis=0)
     # Fix last window
     if pad > 0:
-        last = v_win[0:-pad, -1]
-        wlen[-1] = last.shape[0]
+        i_lastwindow = i_win[0:-pad, -1]
+        v_lastwindow = v_win[0:-pad, -1]
+        first[-1] = np.min(i_lastwindow)
+        last[-1] = np.max(i_lastwindow)
+        mid[-1] = np.average(i_lastwindow)
+        wlen[-1] = v_lastwindow.shape[0]
         fcov[-1] = fragment_coverage(wlen[-1], flen[-1])
-        avg[-1] = np.average(last)
-        sd[-1] = np.std(last)
+        avg[-1] = np.average(v_lastwindow)
+        sd[-1] = np.std(v_lastwindow)
     # We estimate the standard error of the window average by interpreting it as a
     # transformed Poissonian random variable. The average coverage A (= avg)
     # is thenumber of fragments N overlapping the window times the average number of
@@ -80,9 +88,13 @@ def window_statistics(cov: Coverage, wsize: int) -> np.ndarray:
     #   sqrt(N) * L = sqrt(A / L) * L = sqrt(A) * sqrt(L)
     serr = np.sqrt(avg) * np.sqrt(fcov)
     # Create result table
-    cols = [('wlen', np.int32), ('flen', np.float64), ('fcov', np.float64),
+    cols = [('first', np.int32), ('mid', np.float64), ('last', np.int32),
+            ('wlen', np.int32), ('flen', np.float64), ('fcov', np.float64),
             ('avg', np.float64), ('sd', np.float64), ('serr', np.float64) ]
     tab = np.zeros(wlen.shape[0], dtype=cols)
+    tab["first"] = first
+    tab["mid"] = mid
+    tab["last"] = last
     tab["wlen"] = wlen
     tab["flen"] = flen
     tab["fcov"] = fcov
@@ -171,39 +183,41 @@ print(f"Finding mappable windows for window size {WINDOWSIZE}bp")
 # NOTE: In the following, the data is kept in dictionaries which contain
 # one numpy.ndarray per chromosome, indexed by the chromosome name. 
 
-# Compute window midpoints
-MIDPOINTS = { seq: np.arange(start=WINDOWSIZE/2, stop=length, step=WINDOWSIZE) for seq, length in SAM_SEQLENGTHS.items() }
-# Test whether windows overlap some non-mappable regions
-SAM_MAPPABLE = { seq: np.array([ not SAM_MAPPABILITY[seq].overlaps(i-WINDOWSIZE/2, i+WINDOWSIZE/2)
-                                 for i in grid.tolist() ], dtype=np.bool_)
-                 for seq, grid in MIDPOINTS.items() }
-REF_MAPPABLE = { seq: np.array([ not REF_MAPPABILITY[seq].overlaps(i-WINDOWSIZE/2, i+WINDOWSIZE/2)
-                                 for i in grid.tolist() ], dtype=np.bool_)
-                 for seq, grid in MIDPOINTS.items() }
 
 # Compute average coverage and std. dev. within each window
 # window_average() returns a heterogeonous ndarray with named columns "avg", "sd" and "wlen"
 print(f"Computing abundances and abundance ratios")
 SAM = { seq: window_statistics(SAM_COVERAGE[seq], WINDOWSIZE)
-        for seq, grid in MIDPOINTS.items() }
+        for seq in SAM_SEQLENGTHS.keys() }
 REF = { seq: window_statistics(REF_COVERAGE[seq], WINDOWSIZE)
-        for seq, grid in MIDPOINTS.items() }
+        for seq in REF_SEQLENGTHS.keys() }
 
 # Compute coverage ratio
 RATIO = { seq: coverage_ratio(SAM[seq], REF[seq]) for seq in SAM.keys() }
 
+# Test whether windows overlap some non-mappable regions
+SAM_MAPPABLE = { seq: np.array([ not SAM_MAPPABILITY[seq].overlaps(begin, end+1)
+                                 for (begin, end) in zip(win["first"].tolist(), win["last"].tolist()) ])
+                 for seq, win in SAM.items() }
+REF_MAPPABLE = { seq: np.array([ not REF_MAPPABILITY[seq].overlaps(begin, end+1)
+                                 for (begin, end) in zip(win["first"].tolist(), win["last"].tolist()) ])
+                 for seq, win in REF.items() }
+
 # Output results
-SLEN = max([len(seq) for seq, _ in MIDPOINTS.items() ])
-COLS = [('seq', f"U{SLEN}"), ('position', np.int32), ('windowsize', np.int32), ('fragmentlength', np.float64), ('readcoverage', np.float64), 
+SLEN = max([len(seq) for seq in SAM_SEQLENGTHS.keys() ])
+COLS = [('seq', f"U{SLEN}"), ('first', np.int32), ('midpoint', np.float64), ('last', np.int32),
+        ('windowsize', np.int32), ('fragmentlength', np.float64), ('readcoverage', np.float64), 
         ("sample_avg", np.float64), ("sample_sd", np.float64), ("sample_avg_stderr", np.float64), ("sample_mappable", np.bool_), 
         ("reference_avg", np.float64), ("reference_sd", np.float64), ("reference_avg_stderr", np.float64), ("reference_mappable", np.bool_), 
         ("ratio", np.float64), ("ratio_stderr", np.float64), ("ratio_mappable", np.bool_) ]
 with (open(ABUNDANCE_FILE, "w+") as f):
     f.write("\t".join([name for (name, type) in COLS]) + "\n")
     for seq in SAM.keys():
-        tab = np.zeros(MIDPOINTS[seq].size, dtype=COLS)
-        tab["seq"] = np.array([seq] * MIDPOINTS[seq].shape[0], dtype=tab["seq"].dtype)
-        tab["position"] = MIDPOINTS[seq]
+        tab = np.zeros(SAM[seq].shape[0], dtype=COLS)
+        tab["seq"] = np.full(SAM[seq].shape[0], fill_value=seq, dtype=tab["seq"].dtype)
+        tab["first"] = SAM[seq]["first"]
+        tab["midpoint"] = SAM[seq]["mid"]
+        tab["last"] = SAM[seq]["last"]
         tab["windowsize"] = SAM[seq]["wlen"]
         tab["fragmentlength"] = SAM[seq]["flen"]
         tab["readcoverage"] = SAM[seq]["fcov"]
@@ -218,4 +232,4 @@ with (open(ABUNDANCE_FILE, "w+") as f):
         tab["ratio"] = RATIO[seq]["q"]
         tab["ratio_stderr"] = RATIO[seq]["serr"]
         tab["ratio_mappable"] = SAM_MAPPABLE[seq] & REF_MAPPABLE[seq]
-        np.savetxt(f, tab, delimiter="\t", fmt=("%s",) + ("%d",)*2 + ("%.2f",)*2 + ("%.2f", "%.5f", "%.5f", "%d")*2 + ("%.5f", "%.5f", "%d"))
+        np.savetxt(f, tab, delimiter="\t", fmt=("%s",) + ("%d", "%.1f", "%d", "%d") + ("%.2f",)*2 + ("%.2f", "%.5f", "%.5f", "%d")*2 + ("%.5f", "%.5f", "%d"))
