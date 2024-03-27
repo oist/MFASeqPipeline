@@ -68,7 +68,10 @@ for i in range(0, len(targets_or_settings)):
     arg = targets_or_settings[i]
     in_targets = in_targets and "=" not in arg
     if in_targets:
-        ARGS.targets.append(arg)
+        if arg == "all":
+            ARGS.targets.extend(CFG["targets"].keys())
+        else:
+            ARGS.targets.append(arg)
     else:
         key_value = arg.split("=", maxsplit=1)
         if len(key_value) < 2:
