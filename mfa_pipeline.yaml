@@ -12,6 +12,7 @@ windowsize: 10k
 cores: 16
 memory_map_gb: 16
 memory_sort_gb: 16
+log_file: '{out_dir}/{sample}.{step}.log'
 read1_file: '{fastq_dir}/{sample}_r1.fastq.gz'
 read2_file: '{fastq_dir}/{sample}_r2.fastq.gz'
 bam_file: '{out_dir}/{sample}.bam'
