@@ -201,7 +201,8 @@ def execute_job(job):
                 if ARGS.verbose:
                     print(f"    executor: {execute_cmd}", file=step_stdout)
                     print(f"    running step ...", file=step_stdout)
-                subprocess.run(execute_cmd, shell=True, executable=step_cfg["shell"], stdout=step_stdout, check=True)
+                subprocess.run(execute_cmd, shell=True, executable=step_cfg["shell"],
+                               stdout=step_stdout, stderr=step_stdout, check=True)
             finally:
                 os.remove(step_cfg["script_file"])
             if ARGS.verbose:
