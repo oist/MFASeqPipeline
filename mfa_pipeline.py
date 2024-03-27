@@ -29,13 +29,18 @@ parser = argparse.ArgumentParser(
     prog="MFASeqPipeline", 
     description="Process MFA-Seq data")
 
-parser.add_argument("config", help="Config file in YAML format")
-parser.add_argument("target", help="Target name")
 parser.add_argument("--jobs", default=1, type=int, help="number of parallel jobs to run")
 parser.add_argument("--verbose", default=False, action=argparse.BooleanOptionalAction)
-parser.add_argument("--steps", action="store", type=lambda s: s.split(","), help="steps to run")
+parser.add_argument("--steps", type=lambda s: s.split(","), help="comma-separated list of steps to run")
+parser.add_argument("config", help="config file in YAML format")
+parser.add_argument("targets", nargs="+", metavar="target", help="targets whose jobs to run")
+parser.add_argument("settings", nargs="*", metavar="KEY=VALUE", help="override config file settings")
 
-ARGS, overrides = parser.parse_known_args()
+# Parse arguments
+# NOTE: The parser cannot actually distinguish between target and
+# configuration overrides, and thus puts all extra arguments in targets.
+# We thus must split the targets manually into actual targets and seettings.
+ARGS = parser.parse_args()
 
 # Load config
 def load_config(name):
@@ -54,10 +59,22 @@ CFG = load_config(ARGS.config)
 if ARGS.steps is not None:
     CFG["steps"] = ARGS.steps
 
-while len(overrides) > 0:
-    arg = overrides.pop()
-    key, value = arg.split("=")
-    CFG[key] = value
+# Split ARGS.targets into actual targets and settings, apply setting to config
+targets_or_settings = ARGS.targets
+in_targets = True
+ARGS.targets = []
+ARGS.settings = []
+for i in range(0, len(targets_or_settings)):
+    arg = targets_or_settings[i]
+    in_targets = in_targets and "=" not in arg
+    if in_targets:
+        ARGS.targets.append(arg)
+    else:
+        key_value = arg.split("=", maxsplit=1)
+        if len(key_value) < 2:
+            raise ArgumentError(f"invalid argument {arg}, must be of the form KEY=VALUE")
+        key, value = key_value[0], yaml.safe_load(StringIO(key_value[1]))
+        CFG[key] = value
 
 # Function to expand configuration settings
 def expand(value, cfg=CFG):
@@ -231,5 +248,10 @@ def execute_job(job):
 
 # Execute all jobs in target
 POOL = concurrent.futures.ThreadPoolExecutor(max_workers=ARGS.jobs)
-for r in POOL.map(execute_job, CFG["targets"][ARGS.target]):
-    pass
+for target in ARGS.targets:
+    if target not in CFG["targets"]:
+        raise ArgumentError(f"invalid target {target}")
+    print(f'=== TARGET: {target}')
+    for r in POOL.map(execute_job, CFG["targets"][target]):
+        pass
+    print(f'=== COMPLETED TARGET: {target}')
