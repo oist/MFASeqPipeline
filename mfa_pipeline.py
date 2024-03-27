@@ -135,10 +135,10 @@ def execute_job(job):
                 log_file = expand(step_cfg["log_file"], step_cfg)
                 # Only shadow output to stdout if we're not running jobs concurrently
                 if ARGS.jobs > 1:
-                    step_stdout = open(log_file, "w+")
+                    step_stdout = open(log_file, "w+", buffering=1)
                 else:
                     step_stdout = subprocess.Popen(["tee", log_file], stdin=subprocess.PIPE,
-                                                   text=True, close_fds=True).stdin
+                                                   text=True, bufsize=1, close_fds=True).stdin
             else:
                 step_stdout = sys.stdout
 
