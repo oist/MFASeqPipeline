@@ -445,12 +445,18 @@ A <- function(x, p, ...)
 # **** Parameter Estimation **********************************************
 # ************************************************************************
 
-read.abundance <- function(file) {
+read.abundance <- function(file, genome.length, genome.origin) {
+  # Read abundance file
   data <- data.table(read.table(file, header=TRUE, sep="\t"))
+  # Remove windows with mapping issues
   data <- data[ratio_mappable==1]
-  # logl.const is the constant part of log-likelihood. For model predictions m,
+  # Return genomic locations, centered such that the origin lies at 0,
+  # observed abundances, least-square weights derived from standard errors,
+  # and the constant part of log-likelihood. For model predictions m,
   # the full log-likelihood assuming normality is then: logl.const + w * (a - m)^2
-  return(list(x=data$midpoint,
+  return(list(x=ifelse(data$midpoint >= genome.origin,
+                       data$midpoint - genome.origin,
+                       genome.length + data$midpoint - genome.origin),
               y=data$coverage_ratio,
               w=1/(2*data$coverage_ratio_stderr^2),
               logl.const=-sum(log(data$coverage_ratio_stderr)) -0.5*log(2*pi)*nrow(data)))
