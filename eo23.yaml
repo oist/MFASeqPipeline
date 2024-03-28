@@ -61,3 +61,52 @@ targets:
       reference: T17_DNA_JD1203_R3_Stat_S20
     - sample: T17_DNA_JD1203_R3_Exp_S15
       reference: T17_DNA_JD1203_R3_Stat_S20
+    - sample: T37_DNA_MG1655_R1_Exp_S1
+      reference: T37_DNA_MG1655_R3_Stat_S16
+    - sample: T37_DNA_MG1655_R2_Exp_S6
+      reference: T37_DNA_MG1655_R3_Stat_S16
+    - sample: T37_DNA_MG1655_R3_Exp_S11
+      reference: T37_DNA_MG1655_R3_Stat_S16
+    - sample: T37_DNA_RCe504_R1_Exp_S2
+      reference: T37_DNA_RCe504_R3_Stat_S17
+    - sample: T37_DNA_RCe504_R2_Exp_S7
+      reference: T37_DNA_RCe504_R3_Stat_S17
+    - sample: T37_DNA_RCe504_R3_Exp_S12
+      reference: T37_DNA_RCe504_R3_Stat_S17
+    - sample: T37_DNA_RCe567_R1_Exp_S3
+      reference: T37_DNA_RCe567_R3_Stat_S18
+    - sample: T37_DNA_RCe567_R2_Exp_S8
+      reference: T37_DNA_RCe567_R3_Stat_S18
+    - sample: T37_DNA_RCe567_R3_Exp_S13
+      reference: T37_DNA_RCe567_R3_Stat_S18
+    - sample: T37_DNA_JD1181_R1_Exp_S4
+      reference: T37_DNA_JD1181_R3_Stat_S19
+    - sample: T37_DNA_JD1181_R2_Exp_S9
+      reference: T37_DNA_JD1181_R3_Stat_S19
+    - sample: T37_DNA_JD1181_R3_Exp_S14
+      reference: T37_DNA_JD1181_R3_Stat_S19
+    - sample: T37_DNA_JD1203_R1_Exp_S5
+      reference: T37_DNA_JD1203_R3_Stat_S20
+    - sample: T37_DNA_JD1203_R2_Exp_S10
+      reference: T37_DNA_JD1203_R3_Stat_S20
+    - sample: T37_DNA_JD1203_R3_Exp_S15
+      reference: T37_DNA_JD1203_R3_Stat_S20
+  exponential_mg1655:
+    - sample: T17_DNA_MG1655_R1_Exp_S1
+      reference: T17_DNA_MG1655_R3_Stat_S16
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
+    - sample: T17_DNA_MG1655_R2_Exp_S6
+      reference: T17_DNA_MG1655_R3_Stat_S16
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
+    - sample: T17_DNA_MG1655_R3_Exp_S11
+      reference: T17_DNA_MG1655_R3_Stat_S16
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
+    - sample: T37_DNA_MG1655_R1_Exp_S1
+      reference: T37_DNA_MG1655_R3_Stat_S16
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
+    - sample: T37_DNA_MG1655_R2_Exp_S6
+      reference: T37_DNA_MG1655_R3_Stat_S16
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
+    - sample: T37_DNA_MG1655_R3_Exp_S11
+      reference: T37_DNA_MG1655_R3_Stat_S16
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
