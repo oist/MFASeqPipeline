@@ -100,12 +100,14 @@ def window_statistics(coverage: Coverage, wsize: int) -> np.ndarray:
         cov_avg[-1] = np.average(cov_lastwindow)
         cov_sd[-1] = np.std(cov_lastwindow)
     # We estimate the standard error of the window average by interpreting it as a
-    # transformed Poissonian random variable. The average coverage A (= avg)
-    # is thenumber of fragments N overlapping the window times the average number of
-    # bases L (= covlen) covered by a single fragment. We assume that the standard error
-    # of N is sqrt(N), therefore the standard error of A = N * L is
-    #   sqrt(N) * L = sqrt(A / L) * L = sqrt(A) * sqrt(L)
-    cov_serr = np.sqrt(cov_avg) * np.sqrt(fcov)
+    # transformed Poissonian random variable. The average coverage A (= avg) is
+    # is approximately N * L / W where N is the number of fragments overlapping the
+    # window, L (= covlen) the average number of bases covered by a single fragment,
+    # and W (= wlen) the window size. N should approximately follow a Poissonian
+    # distribution and thus have standard error sqrt(N). Therefore the standard error
+    # of A = N * L / W is
+    #   sqrt(N) * L / W = sqrt(A * W / L) * L / W = sqrt(A) * sqrt(L/W)
+    cov_serr = np.sqrt(cov_avg) * np.sqrt(fcov / wlen)
     # Create result table
     cols = [('first', np.int32), ('mid', np.float64), ('last', np.int32),
             ('wlen', np.int32), ('flen', np.float64), ('fcov', np.float64),
@@ -256,7 +258,7 @@ REF_MAPPABLE = { seq: np.array([ not REF_MAPPABILITY[seq].overlaps(start, end+1)
 print(f"Writing results to {ABUNDANCE_FILE}")
 SLEN = max([len(seq) for seq in SAM_SEQLENGTHS.keys() ])
 COLS = [('seq', f"U{SLEN}"), ('first', np.int32), ('midpoint', np.float64), ('last', np.int32),
-        ('windowsize', np.int32), ('fragmentlength', np.float64), ('readcoverage', np.float64), 
+        ('windowsize', np.int32), ('fragmentlength', np.float64), ('fragmentcoverage', np.float64), 
         ("sample_coverage_avg", np.float64), ("sample_coverage_sd", np.float64), ("sample_coverage_avg_stderr", np.float64),
         ("sample_startingpoints", np.int32), ("sample_endpoints", np.int32), ("sample_mappable", np.bool_), 
         ("reference_coverage_avg", np.float64), ("reference_coverage_sd", np.float64), ("reference_coverage_avg_stderr", np.float64),
@@ -277,7 +279,7 @@ with open_output(ABUNDANCE_FILE) as f:
         tab["last"] = SAM[seq]["last"]
         tab["windowsize"] = SAM[seq]["wlen"]
         tab["fragmentlength"] = SAM[seq]["flen"]
-        tab["readcoverage"] = SAM[seq]["fcov"]
+        tab["fragmentcoverage"] = SAM[seq]["fcov"]
         tab["sample_mappable"] = SAM_MAPPABLE[seq]
         tab["sample_coverage_avg"] = SAM[seq]["avg"]
         tab["sample_coverage_sd"] = SAM[seq]["sd"]
