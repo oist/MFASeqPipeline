@@ -65,7 +65,8 @@ tab <- rbindlist(lapply(names(ps), function(m) {
   df <- attr(p, "df")
   res <- attr(p, "residual")
   logl <- d$logl.const - res 
-  as.data.table(c(list(model=m, n=length(d$x), df=df, optimal=FALSE),
+  as.data.table(c(list(model=model$abbreviation, regime=m,
+                       n=length(d$x), df=df, optimal=FALSE), L=genome$L,
                   p[c("lambda", "D", "v0", "delta", "omega", "phi")],
                   list(residual=res, logl=logl, aic=2*df - 2*logl)))
 }))
@@ -75,7 +76,9 @@ tab[order(aic, df)[1], optimal := TRUE]
 
 # Output results
 cat("Results:\n")
-print(tab, class=FALSE, row.names=FALSE, digits=3, scipen=0)
+options(width=120)
+print(tab, class=FALSE, row.names=FALSE, digits=3, scipen=0,
+      nrows=nrow(tab))
 
 # Write output
 write.table(file=output.file, tab, sep="\t", quote=FALSE,

@@ -145,6 +145,7 @@ vx.A <- Vectorize(function(x, p, force.numeric=FALSE) {
 
 vx.harmonic.model <- list(
   name="v(x) harmonic",
+  abbreviation="vx",
   v1=function(x, t, p) vx(x, p),
   v2=function(x, t, p) -vx(x, p),
   D1=function(x, t, p) p$D,
@@ -281,6 +282,7 @@ vd.A <- Vectorize(function(x, p, force.numeric=FALSE) {
 
 vd.harmonic.model <- list(
   name="v(d) harmonic",
+  abbreviation="vd",
   v1=function(x, t, p) vd(x, p),
   v2=function(x, t, p) -vd(p$L - x, p),
   D1=function(x, t, p) p$D,
@@ -394,6 +396,7 @@ vt.A <- Vectorize(function(x, p, tol=1e-3) {
 
 vt.harmonic.model <- list(
   name="v(t) harmonic",
+  abbreviation="vt",
   v1=function(x, t, p) vt(t, p),
   v2=function(x, t, p) -vt(t, p),
   D1=function(x, t, p) vt.D(t, p),
