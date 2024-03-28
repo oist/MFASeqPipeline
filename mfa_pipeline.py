@@ -29,18 +29,29 @@ parser = argparse.ArgumentParser(
     prog="MFASeqPipeline", 
     description="Process MFA-Seq data")
 
-parser.add_argument("--jobs", default=1, type=int, help="number of parallel jobs to run")
-parser.add_argument("--verbose", default=False, action=argparse.BooleanOptionalAction)
-parser.add_argument("--steps", type=lambda s: s.split(","), help="comma-separated list of steps to run")
-parser.add_argument("config", help="config file in YAML format")
-parser.add_argument("targets", nargs="+", metavar="target", help="targets whose jobs to run")
-parser.add_argument("settings", nargs="*", metavar="KEY=VALUE", help="override config file settings")
+parser.add_argument("--jobs", default=1, type=int,
+                    help="number of parallel jobs to run")
+parser.add_argument("--quiet", action=argparse.BooleanOptionalAction,
+                    help="do not log to stdout (defaults to true in case of parallel jobs)")
+parser.add_argument("--verbose", default=False, action=argparse.BooleanOptionalAction,
+                    help="more extensive logging")
+parser.add_argument("--steps", type=lambda s: s.split(","),
+                    help="comma-separated list of steps to run")
+parser.add_argument("config",
+                    help="config file in YAML format")
+parser.add_argument("targets", nargs="*", metavar="target",
+                    help="targets whose jobs to run")
+parser.add_argument("settings", nargs="*", metavar="KEY=VALUE",
+                    help="override config file settings")
 
 # Parse arguments
 # NOTE: The parser cannot actually distinguish between target and
 # configuration overrides, and thus puts all extra arguments in targets.
 # We thus must split the targets manually into actual targets and seettings.
 ARGS = parser.parse_args()
+
+if ARGS.quiet is None:
+    ARGS.quiet = (ARGS.jobs > 1)
 
 # Load config
 def load_config(name):
@@ -145,7 +156,7 @@ def execute_job(job):
             # Check if the step needs to be executed
             if all([os.path.exists(f) for f in output_files]):
                 # Only write to stdout if we"re not running jobs concurrently
-                if ARGS.jobs == 1:
+                if not ARGS.quiet:
                     log_header(sys.stdout)
                     print(f"    all outputs already exists, skipping step...")
                 continue
@@ -154,7 +165,7 @@ def execute_job(job):
             if "log_file" in step_cfg:
                 log_file = expand(step_cfg["log_file"], step_cfg)
                 # Only shadow output to stdout if we're not running jobs concurrently
-                if ARGS.jobs > 1:
+                if ARGS.quiet:
                     step_stdout = open(log_file, "w+", buffering=1)
                 else:
                     step_stdout = subprocess.Popen(["tee", log_file], stdin=subprocess.PIPE,
@@ -250,11 +261,16 @@ def execute_job(job):
         atexit.unregister(cleanup_tempfiles)
 
 # Execute all jobs in target
-POOL = concurrent.futures.ThreadPoolExecutor(max_workers=ARGS.jobs)
-for target in ARGS.targets:
-    if target not in CFG["targets"]:
-        raise ArgumentError(f"invalid target {target}")
-    print(f'=== TARGET: {target}')
-    for r in POOL.map(execute_job, CFG["targets"][target]):
-        pass
-    print(f'=== COMPLETED TARGET: {target}')
+if len(ARGS.targets) > 0:
+    POOL = concurrent.futures.ThreadPoolExecutor(max_workers=ARGS.jobs)
+    for target in ARGS.targets:
+        if target not in CFG["targets"]:
+            raise ArgumentError(f"invalid target {target}")
+        if not ARGS.quiet:
+            print(f'=== TARGET: {target}')
+        for r in POOL.map(execute_job, CFG["targets"][target]):
+            pass
+        if not ARGS.quiet:
+            print(f'=== COMPLETED TARGET: {target}')
+else:
+    execute_job({})
