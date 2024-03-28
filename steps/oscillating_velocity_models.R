@@ -447,7 +447,13 @@ A <- function(x, p, ...)
 
 read.abundance <- function(file) {
   data <- data.table(read.table(file, header=TRUE, sep="\t"))
-  data[ratio_mappable==1, list(x=midpoint, y=coverage_ratio, w=1/(2*coverage_ratio_stderr^2)) ]
+  data <- data[ratio_mappable==1]
+  # logl.const is the constant part of log-likelihood. For model predictions m,
+  # the full log-likelihood assuming normality is then: logl.const + w * (a - m)^2
+  return(list(x=data$midpoint,
+              y=data$coverage_ratio,
+              w=1/(2*data$coverage_ratio_stderr^2),
+              logl.const=-sum(log(data$coverage_ratio_stderr)) -0.5*log(2*pi)*nrow(data)))
 }
 
 evaluate.model <- function(p, data_or_x, y=NULL, w=NULL, logl.const=NA) {
