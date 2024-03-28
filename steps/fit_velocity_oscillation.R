@@ -53,7 +53,7 @@ cat(paste0("Cores: ", cores, "\n"))
 # Read abundances
 
 d <- read.abundance(abundance.file, genome$L, genome$O)
-cat(paste0("Datapoints: ", nrow(d), "\n"))
+cat(paste0("Datapoints: ", length(d$x), "\n"))
 
 # Fit
 ps <- fit.abundance.stepwise(d$x, d$y, d$w, L=genome$L, model=model,
