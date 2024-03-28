@@ -76,7 +76,7 @@ for i in range(0, len(targets_or_settings)):
         key_value = arg.split("=", maxsplit=1)
         if len(key_value) < 2:
             raise ArgumentError(f"invalid argument {arg}, must be of the form KEY=VALUE")
-        key, value = key_value[0], yaml.safe_load(StringIO(key_value[1]))
+        key, value = key_value[0], yaml.safe_load(io.StringIO(key_value[1]))
         CFG[key] = value
 
 # Function to expand configuration settings
