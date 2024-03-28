@@ -448,8 +448,10 @@ A <- function(x, p, ...)
 read.abundance <- function(file, genome.length, genome.origin) {
   # Read abundance file
   data <- data.table(read.table(file, header=TRUE, sep="\t"))
-  # Remove windows with mapping issues
-  data <- data[ratio_mappable==1]
+  # Remove windows with infinite or nan coverage or mapping issues
+  data <- data[is.finite(coverage_ratio) &
+               is.finite(coverage_ratio_stderr) &
+               (ratio_mappable==1)]
   # Return genomic locations, centered such that the origin lies at 0,
   # observed abundances, least-square weights derived from standard errors,
   # and the constant part of log-likelihood. For model predictions m,
