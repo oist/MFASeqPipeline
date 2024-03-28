@@ -59,15 +59,24 @@ cat(paste0("Datapoints: ", nrow(d), "\n"))
 ps <- fit.abundance.stepwise(d$x, d$y, d$w, L=genome$L, model=model,
                              lambda=sample.lambda/3600, mc.cores=cores)
 
+# Build table of fitting results
 tab <- rbindlist(lapply(names(ps), function(n) {
   p <- ps[[n]]
+  df <- attr(p, "df")
   res <- attr(p, "residual")
   logl <- d$logl.const - res 
-  as.data.table(c(list(type=n), p[c("lambda", "D", "v0", "delta", "omega", "phi")], list(residual=res, logl=logl)))
+  as.data.table(c(list(type=n, df=df, optimal=FALSE),
+                  p[c("lambda", "D", "v0", "delta", "omega", "phi")],
+                  list(residual=res, logl=logl, aic=2*df - 2*logl)))
 }))
 
+# Mark optimal model according to AIC
+tab[order(aic, df)[1], optimal := TRUE]
+
+# Output results
 cat("Results:\n")
-print(tab)
+print(tab, class=FALSE, row.names=FALSE, digits=3, scipen=0)
 
 # Write output
-write.table(file=output.file, tab, sep="\t", col.names=TRUE)
+write.table(file=output.file, tab, sep="\t", quote=FALSE,
+            col.names=TRUE, row.names=FALSE)

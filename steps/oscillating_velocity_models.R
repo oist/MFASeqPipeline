@@ -542,6 +542,7 @@ fit.abundance <- function(x, y, w=NULL, vars, p0, scales.override=numeric(), rsc
   p <- p0
   p[names(scales)] <- r$par * scales
   attr(p, "optim") <- r
+  attr(p, "df") <- length(vars)
   attr(p, "residual") <- r$value * rscale
   return(p)
 }
@@ -612,5 +613,5 @@ fit.abundance.stepwise <- function(x, y, w=NULL, L, lambda, model, mc.cores=1, r
                          p0, mc.cores=mc.cores, rscale=r1, control=list(maxit=1000, reltol=reltol))
   report(p.vosc.Dnz, c("v0", "delta", "omega", "phi", "D"))
   
-  return(list(p.vc.Dz=p.vc.Dz, p.vosc.Dz=p.vosc.Dz, p.vc.Dnz=p.vc.Dnz, p.vosc.Dnz=p.vosc.Dnz))
+  return(list(vc.Dz=p.vc.Dz, vosc.Dz=p.vosc.Dz, vc.Dnz=p.vc.Dnz, vosc.Dnz=p.vosc.Dnz))
 }
