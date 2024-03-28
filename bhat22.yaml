@@ -4,6 +4,7 @@ project_dir: /bucket/PigolottiU/florian-pflug/Deepak
 tmp_base_dir: /flash/PigolottiU/florian-pflug/tmp/
 genome_file: /home/f/florian-pflug/Versioned/OIST/replication/data/EColi-K12-MG1655.fna
 genome_index_prefix: /home/f/florian-pflug/Versioned/OIST/replication/data/EColi-K12-MG1655.fna
+genome_name: EColiMG1655
 windowsize: 10k
 read1_file: '{fastq_dir}/{sample}_L002_R1_001.fastq.gz'
 read2_file: '{fastq_dir}/{sample}_L002_R2_001.fastq.gz'
@@ -23,45 +24,60 @@ targets:
     - sample: 17-1_S13
       fastq_dir: '{project_dir}/T17-1'
       reference: 17-stat-1_S18
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
     - sample: 17-2_S14
       fastq_dir: '{project_dir}/T17-2'
       reference: 17-stat-1_S18
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
     - sample: 17-3_S15
       fastq_dir: '{project_dir}/T17-3'
       reference: 17-stat-1_S18
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
     - sample: 22-1_S10
       fastq_dir: '{project_dir}/T22-1'
       reference: 17-stat-1_S18
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
     - sample: 22-2_S11
       fastq_dir: '{project_dir}/T22-2'
       reference: 17-stat-1_S18
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
     - sample: 22-3_S12
       fastq_dir: '{project_dir}/T22-3'
       reference: 17-stat-1_S18
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
     - sample: 27-1_S7
       fastq_dir: '{project_dir}/T27-1'
       reference: 27-stat-1_S17
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
     - sample: 27-2_S8
       fastq_dir: '{project_dir}/T27-2'
       reference: 27-stat-1_S17
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
     - sample: 27-3_S9
       fastq_dir: '{project_dir}/T27-3'
       reference: 27-stat-1_S17
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
     - sample: 32-1_S4
       fastq_dir: '{project_dir}/T32-1'
       reference: 27-stat-1_S17
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
     - sample: 32-2_S5
       fastq_dir: '{project_dir}/T32-2'
       reference: 27-stat-1_S17
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
     - sample: 32-3_S6
       fastq_dir: '{project_dir}/T32-3'
       reference: 27-stat-1_S17
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
     - sample: 37-1_S1
       fastq_dir: '{project_dir}/T37-1'
       reference: 37-stat-1_S16
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
     - sample: 37-2_S2
       fastq_dir: '{project_dir}/T37-2'
       reference: 37-stat-1_S16
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
     - sample: 37-3_S3
       fastq_dir: '{project_dir}/T37-3'
       reference: 37-stat-1_S16
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
