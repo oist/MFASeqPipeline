@@ -60,12 +60,12 @@ ps <- fit.abundance.stepwise(d$x, d$y, d$w, L=genome$L, model=model,
                              lambda=sample.lambda/3600, mc.cores=cores)
 
 # Build table of fitting results
-tab <- rbindlist(lapply(names(ps), function(n) {
-  p <- ps[[n]]
+tab <- rbindlist(lapply(names(ps), function(m) {
+  p <- ps[[m]]
   df <- attr(p, "df")
   res <- attr(p, "residual")
   logl <- d$logl.const - res 
-  as.data.table(c(list(type=n, df=df, optimal=FALSE),
+  as.data.table(c(list(model=m, n=length(d$x), df=df, optimal=FALSE),
                   p[c("lambda", "D", "v0", "delta", "omega", "phi")],
                   list(residual=res, logl=logl, aic=2*df - 2*logl)))
 }))
