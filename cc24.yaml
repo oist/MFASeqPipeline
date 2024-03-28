@@ -11,48 +11,60 @@ use: mfa_pipeline
 targets:
   stationary:
     - sample: ch_1_3_S3
-      steps: [ map, mapstats, mappability ] 
+      steps: [ map, mapstats, mappability ]
     - sample: ch_2_3_S10
-      steps: [ map, mapstats, mappability ] 
+      steps: [ map, mapstats, mappability ]
     - sample: ch_3_3_S17
-      steps: [ map, mapstats, mappability ] 
+      steps: [ map, mapstats, mappability ]
     - sample: cfs_1_S5
-      steps: [ map, mapstats, mappability ] 
+      steps: [ map, mapstats, mappability ]
     - sample: cfs_2_S12
-      steps: [ map, mapstats, mappability ] 
+      steps: [ map, mapstats, mappability ]
     - sample: cfs_3_S19
-      steps: [ map, mapstats, mappability ] 
+      steps: [ map, mapstats, mappability ]
     - sample: cts_1_S7
-      steps: [ map, mapstats, mappability ] 
+      steps: [ map, mapstats, mappability ]
     - sample: cts_2_S14
-      steps: [ map, mapstats, mappability ] 
+      steps: [ map, mapstats, mappability ]
     - sample: cts_3_S21
-      steps: [ map, mapstats, mappability ] 
+      steps: [ map, mapstats, mappability ]
   exponential:
     - sample: ch_1_1_S1
       reference: ch_1_3_S3
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
     - sample: ch_1_2_S2
       reference: ch_1_3_S3
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
     - sample: ch_2_1_S8
       reference: ch_2_3_S10
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
     - sample: ch_2_2_S9
       reference: ch_2_3_S10
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
     - sample: ch_3_1_S15
       reference: ch_3_3_S17
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
     - sample: ch_3_2_S16
       reference: ch_3_3_S17
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
     - sample: cf_1_S4
       reference: cfs_1_S5
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
     - sample: cf_2_S11
       reference: cfs_2_S12
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
     - sample: cf_3_S18
       reference: cfs_3_S19
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
     - sample: ct_1_S6
       reference: cts_1_S7
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
     - sample: ct_2_S13
       reference: cts_2_S14
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
     - sample: ct_3_S20
       reference: cts_3_S21
+      steps: [ map, mapstats, mappability, abundance, velocity_oscillation ]
   test:
     - sample: test
       reference: test
