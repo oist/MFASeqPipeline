@@ -26,7 +26,7 @@ reference_bam_index_file: '{out_dir}/{reference}.bai'
 stats_file: '{out_dir}/{sample}.stats'
 mappability_file: '{out_dir}/{sample}.mappability.bed'
 reference_mappability_file: '{out_dir}/{reference}.mappability.bed'
-abundance_file: '{out_dir}/{sample}.{windowsize}.gz'
+abundance_file: '{out_dir}/{sample}.abd.{windowsize}.gz'
 velocity_oscillation_file: '{out_dir}/{sample}.osc.{velocity_oscillation_model}.tab'
 shell: /bin/bash
 execute_cmd: srun -p compute --mem={step_memory_gb}G -c {step_cores} {script_file}
