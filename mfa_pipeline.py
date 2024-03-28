@@ -213,13 +213,16 @@ def execute_job(job):
 
             # Generate temp file names for output files
             for output_name in output_names:
-                # The output file shouldn't already exists
+                # The output file shouldn't already have a tempfile assigned
                 if output_name in tempfiles:
                     temp_file = tempfiles[output_name]
-                    raise ExecutionError(f"step output {temp_file} already exists")
+                    raise ExecutionError(f"step output {temp_file} already created by a previous step")
                 # Create a temp file for the output
                 temp_file = os.path.join(tmp_dir, os.path.basename(expand(job_cfg[output_name], job_cfg)))
                 tempfiles[output_name] = temp_file
+                # Remove output file should it already exist
+                if os.path.exists(tempfiles[output_name]):
+                    os.remove(tempfiles[output_name])
                 # Update path in step-specific cfg
                 step_cfg[output_name] = tempfiles[output_name]
                 
