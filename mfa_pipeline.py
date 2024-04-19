@@ -53,15 +53,34 @@ ARGS = parser.parse_args()
 if ARGS.quiet is None:
     ARGS.quiet = (ARGS.jobs > 1)
 
+CFG_SEARCHPATH = [ "./", os.path.dirname(os.path.realpath(__file__)) ]
+
 # Load config
 def load_config(name):
-    file_name = name if os.path.exists(name) else f'{name}.yaml'
-    with open(file_name, "r") as cfg_file:
+    # Turn config name into a filename
+    file_name = f"{name}.yaml" if not name.endswith(".yaml") else name
+    # Locate file on search path
+    file_path = None
+    for dir in CFG_SEARCHPATH:
+        file_path = os.path.join(dir, file_name)
+        if os.path.exists(file_path):
+            break
+    if file_path is None:
+        raise ConfigurationError(f"unable to location configuration file {file_name}")
+    # Load configuration
+    with open(file_path, "r") as cfg_file:
         cfg = yaml.safe_load(cfg_file)
+    # Recursively load configurations listed in "use"
     if "use" in cfg:
-        base = load_config(cfg["use"])
-        base.update(cfg)
-        cfg = base
+        base_names = cfg["use"]
+        if isinstance(base_names, str):
+            base_names = [ base_names ]
+        if not isinstance(base_names, list) or not all([ isinstance(v, str) for v in base_names ]):
+            raise ConfigurationError("'use' must be a string or a list of string of configurations to load")
+        for base_name in base_names:
+            base = load_config(base_name)
+            base.update(cfg)
+            cfg = base
     return cfg
 
 CFG = load_config(ARGS.config)
