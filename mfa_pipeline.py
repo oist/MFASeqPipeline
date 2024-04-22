@@ -44,16 +44,10 @@ parser.add_argument("targets", nargs="*", metavar="target",
 parser.add_argument("settings", nargs="*", metavar="KEY=VALUE",
                     help="override config file settings")
 
-# Parse arguments
-# NOTE: The parser cannot actually distinguish between target and
-# configuration overrides, and thus puts all extra arguments in targets.
-# We thus must split the targets manually into actual targets and seettings.
-ARGS = parser.parse_args()
-
-if ARGS.quiet is None:
-    ARGS.quiet = (ARGS.jobs > 1)
-
 CFG_SEARCHPATH = [ "./", os.path.dirname(os.path.realpath(__file__)) ]
+
+# Set later
+CFG = None
 
 # Load config
 def load_config(name):
@@ -83,31 +77,6 @@ def load_config(name):
             cfg = base
     return cfg
 
-CFG = load_config(ARGS.config)
-
-# Merge command-line arguments into config
-if ARGS.steps is not None:
-    CFG["steps"] = ARGS.steps
-
-# Split ARGS.targets into actual targets and settings, apply setting to config
-targets_or_settings = ARGS.targets
-in_targets = True
-ARGS.targets = []
-ARGS.settings = []
-for i in range(0, len(targets_or_settings)):
-    arg = targets_or_settings[i]
-    in_targets = in_targets and "=" not in arg
-    if in_targets:
-        if arg == "all":
-            ARGS.targets.extend(CFG["targets"].keys())
-        else:
-            ARGS.targets.append(arg)
-    else:
-        key_value = arg.split("=", maxsplit=1)
-        if len(key_value) < 2:
-            raise ArgumentError(f"invalid argument {arg}, must be of the form KEY=VALUE")
-        key, value = key_value[0], yaml.safe_load(io.StringIO(key_value[1]))
-        CFG[key] = value
 
 # Function to expand configuration settings
 def expand(value, cfg=CFG):
@@ -295,17 +264,63 @@ def execute_job(job):
         cleanup_tempfiles()
         atexit.unregister(cleanup_tempfiles)
 
-# Execute all jobs in target
-if len(ARGS.targets) > 0:
-    POOL = concurrent.futures.ThreadPoolExecutor(max_workers=ARGS.jobs)
-    for target in ARGS.targets:
-        if target not in CFG["targets"]:
-            raise ArgumentError(f"invalid target {target}")
-        if not ARGS.quiet:
-            print(f'=== TARGET: {target}')
-        for r in POOL.map(execute_job, CFG["targets"][target]):
-            pass
-        if not ARGS.quiet:
-            print(f'=== COMPLETED TARGET: {target}')
-else:
-    execute_job({})
+try:
+    # Parse arguments
+    # NOTE: The parser cannot actually distinguish between target and
+    # configuration overrides, and thus puts all extra arguments in targets.
+    # We thus must split the targets manually into actual targets and seettings.
+    ARGS = parser.parse_args()
+
+    if ARGS.quiet is None:
+        ARGS.quiet = (ARGS.jobs > 1)
+
+    # Load config
+    CFG = load_config(ARGS.config)
+
+    # Merge command-line arguments into config
+    if ARGS.steps is not None:
+        CFG["steps"] = ARGS.steps
+
+    # Split ARGS.targets into actual targets and settings, apply setting to config
+    targets_or_settings = ARGS.targets
+    in_targets = True
+    ARGS.targets = []
+    ARGS.settings = []
+    for i in range(0, len(targets_or_settings)):
+        arg = targets_or_settings[i]
+        in_targets = in_targets and "=" not in arg
+        if in_targets:
+            if arg == "all":
+                ARGS.targets.extend(CFG["targets"].keys())
+            else:
+                ARGS.targets.append(arg)
+        else:
+            key_value = arg.split("=", maxsplit=1)
+            if len(key_value) < 2:
+                raise ArgumentError(f"invalid argument {arg}, must be of the form KEY=VALUE")
+            try:
+                key, value = key_value[0], yaml.safe_load(io.StringIO(key_value[1]))
+            except yaml.parser.ParserError as e:
+                raise ArgumentError(f"invalid YAM syntax in: {key_value[0]}={key_value[1]}\n{e}") from e
+            CFG[key] = value
+
+    # Execute all jobs in target
+    if len(ARGS.targets) > 0:
+        POOL = concurrent.futures.ThreadPoolExecutor(max_workers=ARGS.jobs)
+        for target in ARGS.targets:
+            if target not in CFG["targets"]:
+                raise ArgumentError(f"invalid target {target}")
+            if not ARGS.quiet:
+                print(f'=== TARGET: {target}')
+            for r in POOL.map(execute_job, CFG["targets"][target]):
+                pass
+            if not ARGS.quiet:
+                print(f'=== COMPLETED TARGET: {target}')
+    else:
+        execute_job({})
+except KeyError as e:
+    print(f"ERROR: Variable {e} is not defined", file=sys.stderr)
+    sys.exit(1)
+except Exception as e:
+    print(f"ERROR: {e}", file=sys.stderr)
+    sys.exit(1)
