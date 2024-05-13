@@ -53,17 +53,23 @@ CFG = None
 def load_config(name):
     # Turn config name into a filename
     file_name = f"{name}.yaml" if not name.endswith(".yaml") else name
+    name = name if not name.endswith(".yaml") else name[0:-5]
     # Locate file on search path
     file_path = None
+    file_dir = None
     for dir in CFG_SEARCHPATH:
         file_path = os.path.join(dir, file_name)
         if os.path.exists(file_path):
+            file_dir = dir
             break
-    if file_path is None:
+    if file_dir is None:
         raise ConfigurationError(f"unable to location configuration file {file_name}")
     # Load configuration
     with open(file_path, "r") as cfg_file:
         cfg = yaml.safe_load(cfg_file)
+        # Set <name>_dir to the directory that contains the configuration file,
+        # this allows pipelines to refer to tools by a relative path
+        cfg[f"{name}_dir"] = file_dir
     # Recursively load configurations listed in "use"
     if "use" in cfg:
         base_names = cfg["use"]
