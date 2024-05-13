@@ -48,6 +48,7 @@ CFG_SEARCHPATH = [ "./", os.path.dirname(os.path.realpath(__file__)) ]
 
 # Set later
 CFG = None
+CFG_CMDLINE = None
 
 # Load config
 def load_config(name):
@@ -113,7 +114,7 @@ def expand(value, cfg=CFG):
 # Function to execute all requested steps
 def execute_job(job):
     # Create job-specific config
-    job_cfg = ChainMap(job, CFG)
+    job_cfg = ChainMap(CFG_CMDLINE, job, CFG)
 
     # Keep track for each file whether the newest version is in tmp
     tempfiles = {}
@@ -282,10 +283,13 @@ try:
 
     # Load config
     CFG = load_config(ARGS.config)
-
-    # Merge command-line arguments into config
+    
+    # Command-line cfg overrides
+    CFG_CMDLINE = {}
+    
+    # Steps is special-cased to support comma-separated lists
     if ARGS.steps is not None:
-        CFG["steps"] = ARGS.steps
+        CFG_CMDLINE["steps"] = ARGS.steps
 
     # Split ARGS.targets into actual targets and settings, apply setting to config
     targets_or_settings = ARGS.targets
@@ -297,7 +301,7 @@ try:
         in_targets = in_targets and "=" not in arg
         if in_targets:
             if arg == "all":
-                ARGS.targets.extend(CFG["targets"].keys())
+                ARGS.targets.extend(CFG_CMDLINE["targets"].keys())
             else:
                 ARGS.targets.append(arg)
         else:
@@ -308,7 +312,7 @@ try:
                 key, value = key_value[0], yaml.safe_load(io.StringIO(key_value[1]))
             except yaml.parser.ParserError as e:
                 raise ArgumentError(f"invalid YAM syntax in: {key_value[0]}={key_value[1]}\n{e}") from e
-            CFG[key] = value
+            CFG_CMDLINE[key] = value
 
     # Execute all jobs in target
     if len(ARGS.targets) > 0:
