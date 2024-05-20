@@ -21,6 +21,7 @@ read1_file: '{fastq_dir}/{sample}_r1.fastq.gz'
 read2_file: '{fastq_dir}/{sample}_r2.fastq.gz'
 bam_file: '{out_dir}/{sample}.bam'
 bam_index_file: '{out_dir}/{sample}.bai'
+fastqc_report_file: '{out_dir}/{sample}.fastqc.html'
 reference_bam_file: '{out_dir}/{reference}.bam'
 reference_bam_index_file: '{out_dir}/{reference}.bai'
 stats_file: '{out_dir}/{sample}.stats'
@@ -34,6 +35,7 @@ step_cores: 1
 step_memory_gb: 8
 steps:
   - map
+  - fastqc
   - mapstats
   - mappability
   - abundance
@@ -61,6 +63,19 @@ map_step:
           -
     mv "{bam_file}.in-progress" "{bam_file}"
     samtools index -@ {step_cores} "{bam_file}" "{bam_index_file}"
+fastqc_step:
+  input:
+    - bam_file
+  output:
+    - fastqc_report_file
+  override:
+    step_cores: '{cores}'
+  script: |
+    set -e
+    INPUT_FILE="{bam_file}"
+    REPORT_FILE="${{INPUT_FILE%.bam}}_fastqc.html"
+    fastqc --threads "{step_cores}" --noextract "${{INPUT_FILE}}"
+    mv "${{REPORT_FILE}}" "{fastqc_report_file}"
 mapstats_step:
   input:
     - bam_file
