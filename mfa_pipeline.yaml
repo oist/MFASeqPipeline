@@ -21,7 +21,8 @@ read1_file: '{fastq_dir}/{sample}_r1.fastq.gz'
 read2_file: '{fastq_dir}/{sample}_r2.fastq.gz'
 bam_file: '{out_dir}/{sample}.bam'
 bam_index_file: '{out_dir}/{sample}.bai'
-fastqc_report_file: '{out_dir}/{sample}.fastqc.html'
+fastqc_html_file: '{out_dir}/{sample}_fastqc.html'
+fastqc_zip_file: '{out_dir}/{sample}_fastqc.zip'
 reference_bam_file: '{out_dir}/{reference}.bam'
 reference_bam_index_file: '{out_dir}/{reference}.bai'
 stats_file: '{out_dir}/{sample}.stats'
@@ -67,15 +68,18 @@ fastqc_step:
   input:
     - bam_file
   output:
-    - fastqc_report_file
+    - fastqc_html_file
+    - fastqc_zip_file
   override:
     step_cores: '{cores}'
   script: |
     set -e
     INPUT_FILE="{bam_file}"
-    REPORT_FILE="${{INPUT_FILE%.bam}}_fastqc.html"
+    HTML_FILE="${{INPUT_FILE%.bam}}_fastqc.html"
+    ZIP_FILE="${{INPUT_FILE%.bam}}_fastqc.zip"
     fastqc --threads "{step_cores}" --noextract "${{INPUT_FILE}}"
-    mv "${{REPORT_FILE}}" "{fastqc_report_file}"
+    [[ "${{HTML_FILE}}" == "{fastqc_html_file}" ]] || mv "${{HTML_FILE}}" "{fastqc_html_file}"
+    [[ "${{ZIP_FILE}}" == "{fastqc_zip_file}" ]] || mv "${{ZIP_FILE}}" "{fastqc_zip_file}"
 mapstats_step:
   input:
     - bam_file
