@@ -30,6 +30,8 @@ abundance_file: '{out_dir}/{sample}.abd.{windowsize}.gz'
 velocity_oscillation_file: '{out_dir}/{sample}.osc.{velocity_oscillation_model}.tab'
 shell: /bin/bash
 execute_cmd: srun -p compute --mem={step_memory_gb}G -c {step_cores} {script_file}
+step_cores: 1
+step_memory_gb: 8
 steps:
   - map
   - mapstats
@@ -65,9 +67,6 @@ mapstats_step:
     - bam_index_file
   output:
     - stats_file
-  override:
-    step_cores: 1
-    step_memory_gb: 8
   script: |
     {mfa_pipeline_dir}/steps/mapping_statistics.py "{bam_file}" "{stats_file}"
 mappability_step:
@@ -95,9 +94,6 @@ abundance_step:
     - reference_mappability_file
   output:
      - abundance_file
-  override:
-    step_cores: 1
-    step_memory_gb: 8
   script: |
     {mfa_pipeline_dir}/steps/abundance.py \
       "{bam_file}" "{mappability_file}" \
