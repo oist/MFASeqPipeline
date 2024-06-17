@@ -14,13 +14,14 @@ GENOME_INDEX = sys.argv[2]
 CIRCULAR = bool(sys.argv[3])
 FRAGMENTLENGTH = int(sys.argv[4])
 READLENGTH = int(sys.argv[5])
+IS_PAIRED = sys.argv[6] in ["1", "true"]
 DISPLACEMENT = 1
-OUTPUT = sys.argv[6]
-BWA_ARGS = sys.argv[7:]
+OUTPUT = sys.argv[7]
+BWA_ARGS = sys.argv[8:]
 VERBOSE = False
 
 BWA = subprocess.Popen(
-    ["bwa", "mem"] + BWA_ARGS + ["-p"] + [GENOME_INDEX, "-"],
+    ["bwa", "mem"] + BWA_ARGS + (["-p"] if IS_PAIRED else []) + [GENOME_INDEX, "-"],
     stdin=subprocess.PIPE, stdout=subprocess.PIPE,
     shell=False, encoding="ASCII"
 )
@@ -46,11 +47,15 @@ def read_alignments():
             raise RuntimeError(f"Unexpected read name: {qname}")
         rname_true, fstart, fend = m[1], int(m[2]), int(m[3])
         # Check if the read was mapped correctly
-        is_wrong = (flag & is_prop == 0) or (rname != rname_true) or (cigar != f"{len(seq)}M")
-        if (flag & is_1st != 0):
+        is_wrong = (rname != rname_true) or (cigar != f"{len(seq)}M")
+        if IS_PAIRED:
+            is_wrong = is_wrong or (flag & is_prop == 0)
+            if (flag & is_1st != 0):
+                is_wrong = is_wrong or (pos != fstart)
+            elif (flag & is_2nd != 0):
+                is_wrong = is_wrong or (pos != fend - READLENGTH)
+        else:
             is_wrong = is_wrong or (pos != fstart)
-        elif (flag & is_2nd != 0):
-            is_wrong = is_wrong or (pos != fend - READLENGTH)
         if is_wrong:
             # Flag true fragment location as unmappable
             if VERBOSE:
@@ -58,7 +63,7 @@ def read_alignments():
                 print(f"        : WRONG SOURCE: {rname}:{fstart}-{fend}", file=sys.stderr)
             MAPABLE[rname_true].chop(fstart, fend)
             # Flag location to which the fragment was wrongly mapped as unmappable
-            if (flag & is_prop != 0):
+            if IS_PAIRED and (flag & is_prop != 0):
                 # For proper pairs, use the range between the two reads
                 if tlen > 0:
                     # First read, range extends tlen further bases

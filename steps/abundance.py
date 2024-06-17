@@ -165,19 +165,28 @@ def ratio(sample: np.ndarray, ref: np.ndarray) -> np.ndarray:
     return tab
     
 
-def read_bam(bamfile):
+def read_bam(bamfile, is_paired):
     with pysam.AlignmentFile(bamfile, "rb") as bam:
         # Read sequence lengths from BAM header
         seqlengths = { seq: length for seq, length in zip(bam.header.references, bam.header.lengths) }
         # Create Coverage objects for all chromosomes
         cov = {seq: Coverage(length) for seq, length in seqlengths.items()}
         # Scan read pairs
-        pairs = pyngstuff.read_pair_iterator(bam)
-        for pair in pairs:
-            if pair.forward.reference_start <= pair.reverse.reference_end:
-                cov[pair.forward.reference_name].fragment_inclusive(
-                  start=pair.forward.reference_start, end=pair.reverse.reference_end - 1,
+        if is_paired:
+            # Scan read pairs, mark whole fragment as covered
+            pairs = pyngstuff.read_pair_iterator(bam)
+            for pair in pairs:
+                if pair.forward.reference_start <= pair.reverse.reference_end:
+                    cov[pair.forward.reference_name].fragment_inclusive(
+                      start=pair.forward.reference_start, end=pair.reverse.reference_end - 1,
+                      dir=1)
+        else:
+            # Scan single reads, mark only the read as covered
+            for read in bam:
+                cov[read.reference_name].fragment_inclusive(
+                  start=read.reference_start, end=read.reference_end - 1,
                   dir=1)
+
         return (cov, seqlengths)
 
 
@@ -209,8 +218,9 @@ SAM_BAM_FILE = sys.argv[1]
 SAM_MAPPABILITY_FILE = sys.argv[2]
 REF_BAM_FILE = sys.argv[3]
 REF_MAPPABILITY_FILE = sys.argv[4]
-WINDOWSIZE = sys.argv[5]
-ABUNDANCE_FILE = sys.argv[6]
+IS_PAIRED = sys.argv[5] in ["1", "true"]
+WINDOWSIZE = sys.argv[6]
+ABUNDANCE_FILE = sys.argv[7]
 
 if WINDOWSIZE.endswith("k"):
     WINDOWSIZE = int(WINDOWSIZE[0:-1]) * 1000
@@ -218,11 +228,12 @@ else:
     WINDOWSIZE = int(WINDOWSIZE)
 
 # Read data
-print(f"Reading sample BAM {SAM_BAM_FILE}")
-SAM_COVERAGE, SAM_SEQLENGTHS = read_bam(SAM_BAM_FILE)
+PAIRED_DESC = "paired-end" if IS_PAIRED else "single-end"
+print(f"Reading {PAIRED_DESC} sample BAM {SAM_BAM_FILE}")
+SAM_COVERAGE, SAM_SEQLENGTHS = read_bam(SAM_BAM_FILE, IS_PAIRED)
 
-print(f"Reading reference BAM {REF_BAM_FILE}")
-REF_COVERAGE, REF_SEQLENGTHS = read_bam(REF_BAM_FILE)
+print(f"Reading {PAIRED_DESC} reference BAM {REF_BAM_FILE}")
+REF_COVERAGE, REF_SEQLENGTHS = read_bam(REF_BAM_FILE, IS_PAIRED)
 
 print(f"Reading mappabilities {SAM_MAPPABILITY_FILE}, {REF_MAPPABILITY_FILE}")
 SAM_MAPPABILITY = read_mappability(SAM_MAPPABILITY_FILE, SAM_SEQLENGTHS)
