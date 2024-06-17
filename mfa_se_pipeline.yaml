@@ -30,7 +30,7 @@ mappability_step:
   output:
     - mappability_file
   override:
-    step_cores: 1
+    step_cores: 4
     step_memory_gb: '{memory_map_gb}'
   script: |
     {mfa_pipeline_dir}/steps/mappability.py "{genome_file}" "{genome_index_prefix}" "{genome_circular}" \
