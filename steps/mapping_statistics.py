@@ -18,15 +18,15 @@ insert_sizes = []
 for read in bam.fetch():
     total_reads += 1
     read_lengths.append(read.query_length)
-    if read.is_mapped:
+    if not read.is_unmapped:
         mapped_reads += 1
     if read.is_proper_pair:
         properly_paired_reads += 1
         insert_sizes.append(abs(read.isize))
 
 stats = Stats(total_reads, mapped_reads, properly_paired_reads,
-              int(statistics.median(insert_sizes)),
-              int(statistics.median(read_lengths)))
+              int(statistics.median(insert_sizes)) if len(insert_sizes) > 0 else float('nan'),
+              int(statistics.median(read_lengths)) if len(read_lengths) > 0 else float('nan'))
 
 # Write results to file
 with open(stats_file, "w+") as f:
