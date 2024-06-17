@@ -1,0 +1,37 @@
+sra_dir: "{project_dir}/sra"
+sra_file: "{sra_dir}/{accession}.sra"
+sra_step:
+    output:
+        - sra_file
+    override:
+        step_cores: 1
+    script: |
+        exec prefetch -o "{sra_file}" --resume no --verify yes --progress "{accession}"
+fastq_step:
+    input:
+        - sra_file
+    output:
+        - read1_file
+        - read2_file
+    override:
+        step_cores: 1
+    script: |
+        set -e
+        set -o pipefail
+        
+        rm -f "{tmp_dir}/{accession}*.fastq"
+        fastq-dump --outdir "{tmp_dir}" --split-3 --log-level info -vv "{sra_file}"
+        
+        if [[ -e "{tmp_dir}/{accession}.fastq" ]]; then
+            echo "WARNING: Ignoring single-end reads" >&2
+        fi
+        if [[ "{read1_file}" == *.gz ]]; then
+            gzip -c < "{tmp_dir}/{accession}_1.fastq" > "{read1_file}"
+            rm "{tmp_dir}/{accession}_1.fastq"
+        else
+            mv "{tmp_dir}/{accession}_1.fastq" "{read1_file}"
+        if [[ "{read2_file}" == *.gz ]]; then
+            gzip -c < "{tmp_dir}/{accession}_2.fastq" > "{read2_file}"
+            rm "{tmp_dir}/{accession}_2.fastq"
+        else
+            mv "{tmp_dir}/{accession}_2.fastq" "{read2_file}"
