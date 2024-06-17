@@ -269,9 +269,11 @@ def execute_job(job):
                 if ARGS.verbose:
                     print(f"    copying {temp_file}", file=step_stdout)
                     print(f"    to {output_file} ...", file=step_stdout)
+                # Create directory
                 dir_name = os.path.dirname(output_file)
                 if len(dir_name) > 0:
                     os.makedirs(dir_name, exist_ok=True)
+                # Copy
                 shutil.copy(temp_file, output_file)
 
             if ARGS.verbose:
