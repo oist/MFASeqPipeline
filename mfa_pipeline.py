@@ -176,6 +176,10 @@ def execute_job(job):
             # Redirecet stdout to the log file
             if "log_file" in step_cfg:
                 log_file = expand(step_cfg["log_file"], step_cfg)
+                # Create directory if it does not exist
+                log_dir_name = os.path.dirname(log_file)
+                if len(log_dir_name) > 0:
+                    os.makedirs(log_dir_name, exist_ok=True)
                 # Only shadow output to stdout if we're not running jobs concurrently
                 if ARGS.quiet:
                     step_stdout = open(log_file, "w+", buffering=1)
@@ -187,6 +191,10 @@ def execute_job(job):
 
             # Now that we have a log file, write header
             log_header(step_stdout)
+
+            # Create temporary directory for job
+            tmp_dir = expand(job_cfg["tmp_dir"], job_cfg)
+            os.makedirs(tmp_dir, exist_ok=True)
             
             # Copy input files to tmp and update config accordingly
             for input_name in input_names:
@@ -195,8 +203,6 @@ def execute_job(job):
                 # reason is again that the expansion must agree between steps. For the temp file
                 # we could in principle allow step-specific overrides, but then the name of the
                 # temp file would depend on the step which created it, which seems silly.
-                tmp_dir = expand(job_cfg["tmp_dir"], job_cfg)
-                os.makedirs(tmp_dir, exist_ok=True)
                 if input_name not in tempfiles:
                     # Create a temp file for the input
                     input_file = expand(job_cfg[input_name], job_cfg)
