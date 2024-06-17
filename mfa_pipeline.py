@@ -87,28 +87,30 @@ def load_config(name):
 
 # Function to expand configuration settings
 def expand(value, cfg=CFG):
-    if isinstance(value, str):
-        # format_map() uses {{ and }} to represent literal { and }, i.e.
-        # double-curly braces are replaced by single braces. This works fine
-        # if format_map() is called once, but not if it's called repeatedly
-        # until no more replacements are made -- it will eventually reduce
-        # any number of curly braces to a single one, and then interpret it,
-        # leaving users with no way of producing strings that contain single
-        # curly braces. We thus 'quote' {{ and }} by replacing them with {{{{
-        # and }}}}, which format_map() then undoes to arrive at the original
-        # string. This makes it possible to use {{ and }} to represent { and }
-        # despite our iterated calls of format_map()
+    if not isinstance(value, str):
+        raise KeyError(f"expected a string but found {value}")
+    
+    # format_map() uses {{ and }} to represent literal { and }, i.e.
+    # double-curly braces are replaced by single braces. This works fine
+    # if format_map() is called once, but not if it's called repeatedly
+    # until no more replacements are made -- it will eventually reduce
+    # any number of curly braces to a single one, and then interpret it,
+    # leaving users with no way of producing strings that contain single
+    # curly braces. We thus 'quote' {{ and }} by replacing them with {{{{
+    # and }}}}, which format_map() then undoes to arrive at the original
+    # string. This makes it possible to use {{ and }} to represent { and }
+    # despite our iterated calls of format_map()
+    vq = value.replace("{{", "{{{{").replace("}}", "}}}}")
+    vp = vq.format_map(cfg)
+    i = 0
+    while value != vp:
+        if i > 100:
+          raise ConfigurationError("configuration key {key} expands indefinitely")
+        value = vp
+        # Same quoting of {{ and }} as above
         vq = value.replace("{{", "{{{{").replace("}}", "}}}}")
         vp = vq.format_map(cfg)
-        i = 0
-        while value != vp:
-            if i > 100:
-              raise ConfigurationError("configuration key {key} expands indefinitely")
-            value = vp
-            # Same quoting of {{ and }} as above
-            vq = value.replace("{{", "{{{{").replace("}}", "}}}}")
-            vp = vq.format_map(cfg)
-            i += 1
+        i += 1
     return value.replace("{{", "{").replace("}}", "}")
 
 # Function to execute all requested steps
