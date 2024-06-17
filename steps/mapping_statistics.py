@@ -15,7 +15,7 @@ mapped_reads = 0
 properly_paired_reads = 0
 read_lengths = []
 insert_sizes = []
-for read in bam.fetch():
+for read in bam:
     total_reads += 1
     read_lengths.append(read.query_length)
     if not read.is_unmapped:
