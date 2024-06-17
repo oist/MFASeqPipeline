@@ -183,6 +183,8 @@ def read_bam(bamfile, is_paired):
         else:
             # Scan single reads, mark only the read as covered
             for read in bam:
+                if read.is_unmapped:
+                    continue
                 cov[read.reference_name].fragment_inclusive(
                   start=read.reference_start, end=read.reference_end - 1,
                   dir=1)
