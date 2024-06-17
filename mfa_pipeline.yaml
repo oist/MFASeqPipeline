@@ -19,6 +19,7 @@ growthrate_perhour: $(awk -F'\t' '$1 == "{sample}" {{ print $2 }}' '{growthrates
 log_file: '{out_dir}/{sample}.{step}.log'
 read1_file: '{fastq_dir}/{sample}_r1.fastq.gz'
 read2_file: '{fastq_dir}/{sample}_r2.fastq.gz'
+paired_end: 1
 bam_file: '{out_dir}/{sample}.bam'
 bam_index_file: '{out_dir}/{sample}.bai'
 fastqc_html_file: '{out_dir}/{sample}_fastqc.html'
@@ -101,7 +102,7 @@ mappability_step:
     {mfa_pipeline_dir}/steps/mappability.py "{genome_file}" "{genome_index_prefix}" "{genome_circular}" \
       "$(grep insert_size "{stats_file}" | cut -f 2)" \
       "$(grep read_length "{stats_file}" | cut -f 2)" \
-      true \
+      "{paired_end}" \
       "{mappability_file}" \
       -t {step_cores} -v 1
 abundance_step:
@@ -118,7 +119,7 @@ abundance_step:
     {mfa_pipeline_dir}/steps/abundance.py \
       "{bam_file}" "{mappability_file}" \
       "{reference_bam_file}" "{reference_mappability_file}" \
-      true "{windowsize}" "{abundance_file}"
+      "{paired_end}" "{windowsize}" "{abundance_file}"
 velocity_oscillation_step:
   input:
     - abundance_file

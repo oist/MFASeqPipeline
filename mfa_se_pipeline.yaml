@@ -1,4 +1,5 @@
 read_file: '{fastq_dir}/{sample}.fastq.gz'
+paired_end: 0
 use:
   - mfa_pipeline
 map_step:
@@ -36,21 +37,6 @@ mappability_step:
     {mfa_pipeline_dir}/steps/mappability.py "{genome_file}" "{genome_index_prefix}" "{genome_circular}" \
       "$(grep read_length "{stats_file}" | cut -f 2)" \
       "$(grep read_length "{stats_file}" | cut -f 2)" \
-      false \
+      "{paired_end}" \
       "{mappability_file}" \
       -t {step_cores} -v 1
-abundance_step:
-  input:
-    - bam_file
-    - bam_index_file
-    - mappability_file
-    - reference_bam_file
-    - reference_bam_index_file
-    - reference_mappability_file
-  output:
-     - abundance_file
-  script: |
-    {mfa_pipeline_dir}/steps/abundance.py \
-      "{bam_file}" "{mappability_file}" \
-      "{reference_bam_file}" "{reference_mappability_file}" \
-      false "{windowsize}" "{abundance_file}"
