@@ -31,9 +31,10 @@ parser = argparse.ArgumentParser(
 
 parser.add_argument("--jobs", default=1, type=int,
                     help="number of parallel jobs to run")
-parser.add_argument("--quiet", action=argparse.BooleanOptionalAction,
+parser.add_argument("--quiet", default=None, action='store_true',
                     help="do not log to stdout (defaults to true in case of parallel jobs)")
-parser.add_argument("--verbose", default=False, action=argparse.BooleanOptionalAction,
+parser.add_argument("--no-quiet", dest='quiet', action='store_false')
+parser.add_argument("--verbose", default=False, action='store_true',
                     help="more extensive logging")
 parser.add_argument("--steps", type=lambda s: s.split(","),
                     help="comma-separated list of steps to run")
