@@ -9,14 +9,16 @@ fastq_step:
         set -o pipefail
         
         rm -f "{tmp_dir}/{accession}*.fastq"
-        fastq-dump --outdir "{tmp_dir}" --split-3 --log-level info -vv "{sra_file}"
+        fastq-dump --outdir "{tmp_dir}" --split-3 --log-level info -v -v "{sra_file}"
         
         if [[ -e "{tmp_dir}/{accession}_1.fastq" ]] || [[ -e "{tmp_dir}/{accession}_2.fastq" ]]; then
             echo "WARNING: Ignoring paired-end reads" >&2
         fi
         if [[ "{read_file}" == *.gz ]]; then
+            echo "Compressing {accession}.fastq to produce {read_file}"
             gzip -c < "{tmp_dir}/{accession}.fastq" > "{read_file}"
             rm "{tmp_dir}/{accession}.fastq"
         else
+            echo "Moving {accession}.fastq to {read_file}"
             mv "{tmp_dir}/{accession}.fastq" "{read_file}"
         fi
