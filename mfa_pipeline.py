@@ -124,7 +124,10 @@ def execute_job(job):
     def cleanup_tempfiles():
         for f in tempfiles.values():
             if os.path.exists(f):
-                os.remove(f)
+                if os.path.isdir(f):
+                    shutil.rmtree(f)
+                else:
+                    os.remove(f)
     atexit.register(cleanup_tempfiles)
     
     # Execute steps
@@ -208,11 +211,18 @@ def execute_job(job):
                     # Create a temp file for the input
                     input_file = expand(job_cfg[input_name], job_cfg)
                     temp_file = os.path.join(tmp_dir, os.path.basename(input_file))
-                    # Copy input file to temp file
-                    if ARGS.verbose:
-                        print(f"    copying {input_file}", file=step_stdout)
-                        print(f"    to {temp_file} ...", file=step_stdout)
-                    shutil.copyfile(input_file, temp_file)
+                    if os.path.isdir(input_file):
+                        # Copy input file to temp file
+                        if ARGS.verbose:
+                            print(f"    copying directory {input_file}", file=step_stdout)
+                            print(f"    to directory {temp_file} ...", file=step_stdout)
+                        shutil.copytree(input_file, temp_file)
+                    else:
+                        # Copy input file to temp file
+                        if ARGS.verbose:
+                            print(f"    copying {input_file}", file=step_stdout)
+                            print(f"    to {temp_file} ...", file=step_stdout)
+                        shutil.copyfile(input_file, temp_file)
                     tempfiles[input_name] = temp_file
                 # Update path in step-specific cfg
                 step_cfg[input_name] = tempfiles[input_name]
@@ -267,15 +277,21 @@ def execute_job(job):
                 output_file = expand(job_cfg[output_name], job_cfg)
                 if not os.path.exists(temp_file):
                     raise ExecutionError(f"step failed to produce {temp_file}")
-                if ARGS.verbose:
-                    print(f"    copying {temp_file}", file=step_stdout)
-                    print(f"    to {output_file} ...", file=step_stdout)
-                # Create directory
-                dir_name = os.path.dirname(output_file)
-                if len(dir_name) > 0:
-                    os.makedirs(dir_name, exist_ok=True)
-                # Copy
-                shutil.copy(temp_file, output_file)
+                if os.path.isdir(temp_file):
+                    if ARGS.verbose:
+                        print(f"    copying directory {temp_file}", file=step_stdout)
+                        print(f"    to directory {output_file} ...", file=step_stdout)
+                    shutil.copytree(temp_file, output_file)
+                else:
+                    if ARGS.verbose:
+                        print(f"    copying {temp_file}", file=step_stdout)
+                        print(f"    to {output_file} ...", file=step_stdout)
+                    # Create directory
+                    dir_name = os.path.dirname(output_file)
+                    if len(dir_name) > 0:
+                        os.makedirs(dir_name, exist_ok=True)
+                    # Copy
+                    shutil.copy(temp_file, output_file)
 
             if ARGS.verbose:
                 print(f"    done.", file=step_stdout)
