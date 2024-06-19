@@ -141,9 +141,14 @@ def execute_job(job):
             step = job_cfg[f"{step_name}_step"]
             if not isinstance(step, dict):
                 raise ConfigurationError(f"step {step_name} is not properly defined")
-            step_cfg = ChainMap({"step": step_name},
-                                step["override"] if "override" in step else {},
-                                job_cfg)
+            if "override" in step:
+                step_override = step["override"]
+                if not isinstance(step_override, dict):
+                    raise ConfigurationError(f"step {step_name} has invalid 'override' setting (" +
+                                             f"{type(step_override)} instead of dictionary)")
+            else:
+                step_override = {}
+            step_cfg = ChainMap({"step": step_name}, step_override, job_cfg)
 
             # Get upper-case step name, input and output files, and step script
             input_names = step["input"] if "input" in step else []
