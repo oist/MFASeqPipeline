@@ -114,19 +114,19 @@ def read_alignments():
                     # First read, range extends tlen further bases
                     if VERBOSE:
                         print(f"        : WRONG TARGET: {rname}:{pos}-{pos+tlen+1} (left mate)", file=sys.stderr)
-                    MAPABLE[rname_true].chop(pos, pos + tlen + 1)
+                    MAPABLE[rname].chop(pos, pos + tlen + 1)
                 elif tlen < 0:
                     # Last read, range extends tlen bases from first
                     if VERBOSE:
                         print(f"        : WRONG TARGET: {rname}:{pnext}-{pnext-tlen+1} (righ mate)", file=sys.stderr)
-                    MAPABLE[rname_true].chop(pnext, pnext + (-tlen) + 1)
+                    MAPABLE[rname].chop(pnext, pnext + (-tlen) + 1)
             else:
                 # Otherwise, just use the range where the read mapped to
                 # Note: Technically, we should compute the length along the reference from the CIGAR,
                 # but we just use the sequene length instead for simplicity
                 if VERBOSE:
                     print(f"        : WRONG TARGET: {rname}:{pos}-{pos + len(seq)} (singleton)", file=sys.stderr)
-                    MAPABLE[rname_true].chop(pos, pos + len(seq))
+                    MAPABLE[rname].chop(pos, pos + len(seq))
         else:
             if VERBOSE:
                 print(f"   MATCH: {rname}:{fstart}-{fend} mapped as {rname}:{pos} flag={flag} ({cigar})", file=sys.stderr)
