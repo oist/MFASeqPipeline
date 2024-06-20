@@ -4,6 +4,8 @@ fastq_step:
         - sra_file
     output:
         - read_file
+    override:
+        step_cores: 1
     script: |
         set -e
         set -o pipefail

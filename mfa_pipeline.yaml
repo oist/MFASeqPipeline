@@ -12,9 +12,10 @@ genome_circular: True
 velocity_oscillation_model: vt
 windowsize: 10k
 mapping_quality: 20
-cores: 16
-memory_map_gb: 16
+cores: 32
+memory_map_gb: 32
 memory_sort_gb: 16
+memory_default_gb: 16
 growthrates_file: '{meta_dir}/growthrates.tab'
 growthrate_perhour: $(awk -F'\t' '$1 == "{sample}" {{ print $2 }}' '{growthrates_file}')
 log_file: '{out_dir}/{sample}.{step}.log'
@@ -36,8 +37,8 @@ abundance_file: '{out_dir}/{sample}.abd.{windowsize}.gz'
 velocity_oscillation_file: '{out_dir}/{sample}.osc.{velocity_oscillation_model}.tab'
 shell: /bin/bash
 execute_cmd: srun -p compute --mem={step_memory_gb}G -c {step_cores} {script_file}
-step_cores: 1
-step_memory_gb: 8
+step_cores: '{cores}'
+step_memory_gb: '{memory_default_gb}'
 steps:
   - map
   - fastqc
@@ -52,7 +53,6 @@ map_step:
     - bam_file
     - bam_index_file
   override:
-    step_cores: '{cores}'
     step_memory_gb: '$[{memory_map_gb}+{memory_sort_gb}]'
   script: |
     set -e
@@ -74,8 +74,6 @@ fastqc_step:
   output:
     - fastqc_html_file
     - fastqc_zip_file
-  override:
-    step_cores: '{cores}'
   script: |
     set -e
     INPUT_FILE="{bam_file}"
@@ -90,6 +88,8 @@ mapstats_step:
     - bam_index_file
   output:
     - stats_file
+  override:
+    step_cores: 1
   script: |
     {mfa_pipeline_dir}/steps/mapping_statistics.py "{bam_file}" "{stats_file}"
 mappability_step:
@@ -100,7 +100,6 @@ mappability_step:
   output:
     - mappability_file
   override:
-    step_cores: 4
     step_memory_gb: '{memory_map_gb}'
   script: |
     {mfa_pipeline_dir}/steps/mappability.py "{genome_file}" "{genome_index_prefix}" "{genome_circular}" \
@@ -120,6 +119,8 @@ abundance_step:
     - reference_mappability_file
   output:
      - abundance_file
+  override:
+    step_cores: 1
   script: |
     {mfa_pipeline_dir}/steps/abundance.py \
       "{bam_file}" "{mappability_file}" \
@@ -130,9 +131,6 @@ velocity_oscillation_step:
     - abundance_file
   output:
     - velocity_oscillation_file
-  override:
-    step_cores: 32
-    step_memory_gb: 8
   script: |
     {mfa_pipeline_dir}/steps/fit_velocity_oscillation.R \
       "{genome_name}" "{velocity_oscillation_model}" "{growthrate_perhour}" "{abundance_file}" "{velocity_oscillation_file}" \

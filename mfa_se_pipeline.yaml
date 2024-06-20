@@ -9,7 +9,6 @@ map_step:
     - bam_file
     - bam_index_file
   override:
-    step_cores: '{cores}'
     step_memory_gb: '$[{memory_map_gb}+{memory_sort_gb}]'
   script: |
     set -e
@@ -32,7 +31,6 @@ mappability_step:
   output:
     - mappability_file
   override:
-    step_cores: 4
     step_memory_gb: '{memory_map_gb}'
   script: |
     {mfa_pipeline_dir}/steps/mappability.py "{genome_file}" "{genome_index_prefix}" "{genome_circular}" \
