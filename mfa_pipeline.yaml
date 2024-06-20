@@ -28,6 +28,8 @@ fastqc_zip_file: '{out_dir}/{sample}_fastqc.zip'
 reference_bam_file: '{out_dir}/{reference}.bam'
 reference_bam_index_file: '{out_dir}/{reference}.bai'
 stats_file: '{out_dir}/{sample}.stats'
+regions_file: ''
+exclude_regions: ''
 mappability_file: '{out_dir}/{sample}.mappability.bed'
 reference_mappability_file: '{out_dir}/{reference}.mappability.bed'
 abundance_file: '{out_dir}/{sample}.abd.{windowsize}.gz'
@@ -93,6 +95,7 @@ mapstats_step:
 mappability_step:
   input:
     - genome_file
+    - regions_file
     - stats_file
   output:
     - mappability_file
@@ -103,7 +106,8 @@ mappability_step:
     {mfa_pipeline_dir}/steps/mappability.py "{genome_file}" "{genome_index_prefix}" "{genome_circular}" \
       "$(grep insert_size "{stats_file}" | cut -f 2)" \
       "$(grep read_length "{stats_file}" | cut -f 2)" \
-      "{paired_end}" \
+      "{paired_end}" "{mapping_quality}" \
+      "{regions_file}" "{exclude_regions}" \
       "{mappability_file}" \
       -t {step_cores} -v 1
 abundance_step:

@@ -4,9 +4,19 @@ import subprocess
 import sys
 import threading
 import re
+import gzip
+import bz2
 from Bio import SeqIO
 from intervaltree import IntervalTree, Interval
 from collections import defaultdict
+
+def open_file(filename, mode):
+    if filename.endswith(".gz"):
+        return gzip.open(filename, mode)
+    elif filename.endswith(".bz2"):
+        return bz2.open(filename, mode)
+    else:
+        return open(filename, mode)
 
 # Command-line arguments
 GENOME = sys.argv[1]
@@ -15,11 +25,47 @@ CIRCULAR = bool(sys.argv[3])
 FRAGMENTLENGTH = int(sys.argv[4])
 READLENGTH = int(sys.argv[5])
 IS_PAIRED = sys.argv[6] in ["1", "true"]
+MAPQ = int(sys.argv[7])
+REGIONS = sys.argv[8]
+EXCLUDE = sys.argv[9].split(",")
 DISPLACEMENT = 1
-OUTPUT = sys.argv[7]
-BWA_ARGS = sys.argv[8:]
+OUTPUT = sys.argv[10]
+BWA_ARGS = sys.argv[11:]
 VERBOSE = False
 
+# Read genome to find sequence length and create interval tree
+# containing mappable regions for each sequence
+SEQLENGTHS = dict()
+MAPABLE = dict()
+for r in SeqIO.parse(GENOME, "fasta"):
+    # Start with whole sequence marked as mappable
+    seq = r.seq
+    seqname = r.id
+    seqlength = len(r.seq)
+    SEQLENGTHS[seqname] = seqlength
+    MAPABLE[seqname] = IntervalTree([Interval(0, seqlength)])
+
+# Remove manually excluded regions for the interval tree
+if REGIONS != "":
+    bed_file = open_file(REGIONS, "rt")
+    for line in bed_file:
+        fields = [ f.strip() for f in line.split("\t") ]
+        if len(fields) < 4:
+            raise ArgumentError(f"Regions BED file must have at least 4 columns, found only {len(fields)} columns in line: {line}")
+        chr, start, end, name = fields[0], int(fields[1]), int(fields[2]), fields[3]
+        # Resolve feature names
+        if name in EXCLUDE:
+            # Make sure min < max
+            if start > end:
+                start, end = end, start
+            # Mark range as non-mappable
+            if chr in MAPABLE:
+                MAPABLE[chr].chop(start, end)
+                print(f"Manually excluded region {name} at {chr}:{start+1}-{end}", file=sys.stderr)
+            else:
+                print(f"Manually excluded region {name} lies on unknown sequence {chr}", file=sys.stderr)
+
+# Launch mapper
 BWA = subprocess.Popen(
     ["bwa", "mem"] + BWA_ARGS + (["-p"] if IS_PAIRED else []) + [GENOME_INDEX, "-"],
     stdin=subprocess.PIPE, stdout=subprocess.PIPE,
@@ -29,7 +75,6 @@ BWA = subprocess.Popen(
 # Read alignment produced by BWA and remove non-mappable reagions
 # from the per-chromosome interval trees we keep in MAPABLE. Reading
 # alignment is done on a separate thread to avoid dead-lock issues.
-MAPABLE = dict()
 def read_alignments():
     qname_pattern = re.compile(r"^(.*):([0-9]*):([0-9]*)$")
     is_prop, is_rev, is_1st, is_2nd = 0x2, 0x10, 0x40, 0x80
@@ -40,14 +85,14 @@ def read_alignments():
         # Parse SAM line
         # Note: Convert from 1-based to 0-based coordinates because 1-based is confusing!
         qname, flag, rname, pos, mapq, cigar, rnext, pnext, tlen, seq, qual, *tags = line.split("\t")
-        flag, pos, pnext, tlen = int(flag), int(pos) - 1, int(pnext) - 1, int(tlen)
+        flag, pos, mapq, pnext, tlen = int(flag), int(pos) - 1, int(mapq), int(pnext) - 1, int(tlen)
         # Extract true seq name, fragment start & end from query name
         m = qname_pattern.match(qname)
         if m is None:
             raise RuntimeError(f"Unexpected read name: {qname}")
         rname_true, fstart, fend = m[1], int(m[2]), int(m[3])
         # Check if the read was mapped correctly
-        is_wrong = (rname != rname_true) or (cigar != f"{len(seq)}M")
+        is_wrong = (rname != rname_true) or (mapq < MAPQ) or (cigar != f"{len(seq)}M")
         if IS_PAIRED:
             is_wrong = is_wrong or (flag & is_prop == 0)
             if (flag & is_1st != 0):
@@ -59,7 +104,7 @@ def read_alignments():
         if is_wrong:
             # Flag true fragment location as unmappable
             if VERBOSE:
-                print(f"MISMATCH: {rname}:{fstart}-{fend} mapped at {rname}:{pos} flag={flag} ({cigar})", file=sys.stderr)
+                print(f"MISMATCH: {rname}:{fstart}-{fend} mapped at {rname}:{pos} flag={flag} ({cigar}, {mapq})", file=sys.stderr)
                 print(f"        : WRONG SOURCE: {rname}:{fstart}-{fend}", file=sys.stderr)
             MAPABLE[rname_true].chop(fstart, fend)
             # Flag location to which the fragment was wrongly mapped as unmappable
@@ -90,14 +135,11 @@ BWA_READER = threading.Thread(target=read_alignments, daemon=True)
 BWA_READER.start()
 
 # Input synthetic reads to BWA
-SEQLENGTHS = dict()
 for r in SeqIO.parse(GENOME, "fasta"):
     # Start with whole sequence marked as mappable
     seq = r.seq
     seqname = r.id
     seqlength = len(r.seq)
-    SEQLENGTHS[seqname] = seqlength
-    MAPABLE[seqname] = IntervalTree([Interval(0, seqlength)])
     # Loop over fragment starting points
     for fstart in range(-FRAGMENTLENGTH+1, seqlength-1, DISPLACEMENT):
         # Mark whole sequence as mapable
