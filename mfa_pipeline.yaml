@@ -1,5 +1,4 @@
 project: ProjectName
-base_dir: /data
 tmp_base_dir: /tmp
 project_dir: '{base_dir}/{project}'
 tmp_dir: '{tmp_base_dir}/{project}/{sample}/'
