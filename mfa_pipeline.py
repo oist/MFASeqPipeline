@@ -42,8 +42,8 @@ parser.add_argument("--steps", type=lambda s: s.split(","),
                     help="comma-separated list of steps to run")
 parser.add_argument("config",
                     help="config file in YAML format")
-parser.add_argument("targets", nargs="*", metavar="target",
-                    help="targets whose jobs to run")
+parser.add_argument("targets", nargs="*", metavar="target_group",
+                    help="target groups to process")
 parser.add_argument("settings", nargs="*", metavar="KEY=VALUE",
                     help="override config file settings")
 
