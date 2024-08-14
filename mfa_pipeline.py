@@ -33,6 +33,8 @@ parser.add_argument("--jobs", default=1, type=int,
                     help="number of parallel jobs to run")
 parser.add_argument("--quiet", default=None, action='store_true',
                     help="do not log to stdout (defaults to true in case of parallel jobs)")
+parser.add_argument("--dry", default=None, action='store_true',
+                    help="don't run steps, only print input and output files")
 parser.add_argument("--no-quiet", dest='quiet', action='store_false')
 parser.add_argument("--verbose", default=False, action='store_true',
                     help="more extensive logging")
@@ -183,7 +185,7 @@ def execute_job(job):
                 continue
 
             # Redirecet stdout to the log file
-            if "log_file" in step_cfg:
+            if "log_file" in step_cfg and not ARGS.dry:
                 log_file = expand(step_cfg["log_file"], step_cfg)
                 # Create directory if it does not exist
                 log_dir_name = os.path.dirname(log_file)
@@ -216,13 +218,13 @@ def execute_job(job):
                     # Create a temp file for the input
                     input_file = expand(job_cfg[input_name], job_cfg)
                     temp_file = os.path.join(tmp_dir, os.path.basename(input_file))
-                    if os.path.isdir(input_file):
+                    if os.path.isdir(input_file) and not ARGS.dry:
                         # Copy input file to temp file
                         if ARGS.verbose:
                             print(f"    copying directory {input_file}", file=step_stdout)
                             print(f"    to directory {temp_file} ...", file=step_stdout)
                         shutil.copytree(input_file, temp_file)
-                    else:
+                    elif not ARGS.dry:
                         # Copy input file to temp file
                         if ARGS.verbose:
                             print(f"    copying {input_file}", file=step_stdout)
@@ -242,7 +244,7 @@ def execute_job(job):
                 temp_file = os.path.join(tmp_dir, os.path.basename(expand(job_cfg[output_name], job_cfg)))
                 tempfiles[output_name] = temp_file
                 # Remove output file should it already exist
-                if os.path.exists(tempfiles[output_name]):
+                if os.path.exists(tempfiles[output_name]) and not ARGS.dry:
                     os.remove(tempfiles[output_name])
                 # Update path in step-specific cfg
                 step_cfg[output_name] = tempfiles[output_name]
@@ -268,13 +270,19 @@ def execute_job(job):
                 execute_cmd = expand(step_cfg["execute_cmd"], step_cfg)
                 if ARGS.verbose:
                     print(f"    executor: {execute_cmd}", file=step_stdout)
-                    print(f"    running step ...", file=step_stdout)
-                subprocess.run(execute_cmd, shell=True, executable=step_cfg["shell"],
-                               stdout=step_stdout, stderr=step_stdout, check=True)
+                    if not ARGS.dry:
+                        print(f"    running step ...", file=step_stdout)
+                if not ARGS.dry:
+                    subprocess.run(execute_cmd, shell=True, executable=step_cfg["shell"],
+                                   stdout=step_stdout, stderr=step_stdout, check=True)
             finally:
                 os.remove(step_cfg["script_file"])
-            if ARGS.verbose:
+            if ARGS.verbose and not ARGS.dry:
                 print(f"    ... step completed", file=step_stdout)
+                
+            # In dry mode, we're done
+            if ARGS.dry:
+                continue
             
             # Copy output files from tmp
             for output_name in output_names:
