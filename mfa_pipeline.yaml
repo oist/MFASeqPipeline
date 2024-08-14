@@ -6,7 +6,8 @@ fastq_dir: '{project_dir}/fastq'
 meta_dir: '{project_dir}/meta'
 out_dir: '{project_dir}/results'
 genome_file: '{base_dir}/genome.fasta'
-genome_index_prefix: '{genome_file}'
+genome_index_dir: '{genome_file}.bwaidx'
+genome_index_prefix: '{genome_index_dir}/index'
 genome_circular: True
 velocity_oscillation_model: vt
 windowsize: 10k
@@ -44,10 +45,19 @@ steps:
   - mapstats
   - mappability
   - abundance
+genome_index_step:
+  input:
+    - genome_file
+  output:
+    - genome_index_dir
+  script: |
+    mkdir -p '{genome_index_dir}'
+    bwa index -p '{genome_index_dir}/index' '{genome_file}'
 map_step:
   input:
     - read1_file
     - read2_file
+    - genome_index_dir
   output:
     - bam_file
     - bam_index_file
