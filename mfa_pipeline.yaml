@@ -33,7 +33,7 @@ regions_file: ''
 exclude_regions: ''
 mappability_file: '{out_dir}/{sample}.mappability.bed'
 reference_mappability_file: '{out_dir}/{reference}.mappability.bed'
-abundance_file: '{out_dir}/{sample}.abd.{windowsize}.gz'
+abundance_file: '{out_dir}/{sample}.abd.w{windowsize}bp.gz'
 velocity_oscillation_file: '{out_dir}/{sample}.osc.{velocity_oscillation_model}.tab'
 target: '{sample}'
 shell: /bin/bash
