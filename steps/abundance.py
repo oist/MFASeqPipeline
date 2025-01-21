@@ -240,12 +240,22 @@ PAIRED_DESC = "paired-end" if IS_PAIRED else "single-end"
 print(f"Reading {PAIRED_DESC} sample BAM {SAM_BAM_FILE}, using reads with mapping quality >= {MAPQ}")
 SAM_COVERAGE, SAM_SEQLENGTHS = read_bam(SAM_BAM_FILE, IS_PAIRED, MAPQ)
 
-print(f"Reading {PAIRED_DESC} reference BAM {REF_BAM_FILE}, using reads with mapping quality >= {MAPQ}")
-REF_COVERAGE, REF_SEQLENGTHS = read_bam(REF_BAM_FILE, IS_PAIRED, MAPQ)
+if REF_BAM_FILE != "":
+    print(f"Reading {PAIRED_DESC} reference BAM {REF_BAM_FILE}, using reads with mapping quality >= {MAPQ}")
+    REF_COVERAGE, REF_SEQLENGTHS = read_bam(REF_BAM_FILE, IS_PAIRED, MAPQ)
+else:
+    print(f"No reference BAM file provided")
+    REF_COVERAGE, REF_SEQLENGTHS = None, None
 
-print(f"Reading mappabilities {SAM_MAPPABILITY_FILE}, {REF_MAPPABILITY_FILE}")
+print(f"Reading {SAM_MAPPABILITY_FILE}")
 SAM_MAPPABILITY = read_mappability(SAM_MAPPABILITY_FILE, SAM_SEQLENGTHS)
-REF_MAPPABILITY = read_mappability(REF_MAPPABILITY_FILE, REF_SEQLENGTHS)
+if REF_MAPPABILITY_FILE != "":
+    print(f"Reading {REF_MAPPABILITY_FILE}")
+    REF_MAPPABILITY = read_mappability(REF_MAPPABILITY_FILE, REF_SEQLENGTHS)
+else:
+    print(f"No reference mappability file provided")
+    REF_MAPPABILITY = None
+
 
 # Compute
 #
@@ -258,20 +268,29 @@ REF_MAPPABILITY = read_mappability(REF_MAPPABILITY_FILE, REF_SEQLENGTHS)
 print(f"Computing abundances and abundance ratios")
 SAM = { seq: window_statistics(SAM_COVERAGE[seq], WINDOWSIZE)
         for seq in SAM_SEQLENGTHS.keys() }
-REF = { seq: window_statistics(REF_COVERAGE[seq], WINDOWSIZE)
-        for seq in REF_SEQLENGTHS.keys() }
+if REF_COVERAGE != None and REF_SEQLENGTHS != None:
+    REF = { seq: window_statistics(REF_COVERAGE[seq], WINDOWSIZE)
+            for seq in REF_SEQLENGTHS.keys() }
+else:
+    REF = None
 
 # Compute coverage ratio
-RATIO = { seq: ratio(SAM[seq], REF[seq]) for seq in SAM.keys() }
+if REF != None:
+    RATIO = { seq: ratio(SAM[seq], REF[seq]) for seq in SAM.keys() }
+else:
+    RATIO = None
 
 # Test whether windows overlap some non-mappable regions
 print(f"Finding mappable windows for window size {WINDOWSIZE}bp")
 SAM_MAPPABLE = { seq: np.array([ not SAM_MAPPABILITY[seq].overlaps(start, end+1)
                                  for (start, end) in zip(win["first"].tolist(), win["last"].tolist()) ])
                  for seq, win in SAM.items() }
-REF_MAPPABLE = { seq: np.array([ not REF_MAPPABILITY[seq].overlaps(start, end+1)
-                                 for (start, end) in zip(win["first"].tolist(), win["last"].tolist()) ])
-                 for seq, win in REF.items() }
+if REF != None and REF_MAPPABILITY != None:
+    REF_MAPPABLE = { seq: np.array([ not REF_MAPPABILITY[seq].overlaps(start, end+1)
+                                     for (start, end) in zip(win["first"].tolist(), win["last"].tolist()) ])
+                     for seq, win in REF.items() }
+else:
+    REF_MAPPABLE = None
 
 # Output results
 print(f"Writing results to {ABUNDANCE_FILE}")
@@ -305,17 +324,38 @@ with open_output(ABUNDANCE_FILE) as f:
         tab["sample_coverage_avg_stderr"] = SAM[seq]["serr"]
         tab["sample_startingpoints"] = SAM[seq]["sp"]
         tab["sample_endpoints"] = SAM[seq]["ep"]
-        tab["reference_coverage_avg"] = REF[seq]["avg"]
-        tab["reference_coverage_sd"] = REF[seq]["sd"]
-        tab["reference_coverage_avg_stderr"] = REF[seq]["serr"]
-        tab["reference_startingpoints"] = REF[seq]["sp"]
-        tab["reference_endpoints"] = REF[seq]["ep"]
-        tab["reference_mappable"] = REF_MAPPABLE[seq]
-        tab["coverage_ratio"] = RATIO[seq]["avg"]
-        tab["coverage_ratio_stderr"] = RATIO[seq]["avg_serr"]
-        tab["startingpoint_ratio"] = RATIO[seq]["sp"]
-        tab["startingpoint_ratio_stderr"] = RATIO[seq]["sp_serr"]
-        tab["endpoint_ratio"] = RATIO[seq]["ep"]
-        tab["endpoint_ratio_stderr"] = RATIO[seq]["ep_serr"]
-        tab["ratio_mappable"] = SAM_MAPPABLE[seq] & REF_MAPPABLE[seq]
+        if REF != None:
+            tab["reference_coverage_avg"] = REF[seq]["avg"]
+            tab["reference_coverage_sd"] = REF[seq]["sd"]
+            tab["reference_coverage_avg_stderr"] = REF[seq]["serr"]
+            tab["reference_startingpoints"] = REF[seq]["sp"]
+            tab["reference_endpoints"] = REF[seq]["ep"]
+        else:
+            tab["reference_coverage_avg"] = np.nan
+            tab["reference_coverage_sd"] = np.nan
+            tab["reference_coverage_avg_stderr"] = np.nan
+            tab["reference_startingpoints"] = -1
+            tab["reference_endpoints"] = -1
+        if REF_MAPPABLE != None:
+            tab["reference_mappable"] = REF_MAPPABLE[seq]
+        else:
+            tab["reference_mappable"] = False
+        if RATIO != None:
+            tab["coverage_ratio"] = RATIO[seq]["avg"]
+            tab["coverage_ratio_stderr"] = RATIO[seq]["avg_serr"]
+            tab["startingpoint_ratio"] = RATIO[seq]["sp"]
+            tab["startingpoint_ratio_stderr"] = RATIO[seq]["sp_serr"]
+            tab["endpoint_ratio"] = RATIO[seq]["ep"]
+            tab["endpoint_ratio_stderr"] = RATIO[seq]["ep_serr"]
+        else:
+            tab["coverage_ratio"] = np.nan
+            tab["coverage_ratio_stderr"] = np.nan
+            tab["startingpoint_ratio"] = np.nan
+            tab["startingpoint_ratio_stderr"] = np.nan
+            tab["endpoint_ratio"] = np.nan
+            tab["endpoint_ratio_stderr"] = np.nan
+        if REF_MAPPABLE != None:
+            tab["ratio_mappable"] = SAM_MAPPABLE[seq] & REF_MAPPABLE[seq]
+        else:
+            tab["ratio_mappable"] = False
         np.savetxt(f, tab, delimiter="\t", fmt=FMT)
