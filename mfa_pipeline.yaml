@@ -41,11 +41,13 @@ execute_cmd: srun -p compute --mem={step_memory_gb}G -c {step_cores} {script_fil
 step_cores: '{cores}'
 step_memory_gb: '{memory_default_gb}'
 steps:
+  - genome_index
   - map
   - fastqc
   - mapstats
   - mappability
   - abundance
+  - velocity_oscillation
 genome_index_step:
   input:
     - genome_file
