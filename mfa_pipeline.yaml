@@ -113,6 +113,7 @@ mapstats_step:
 mappability_step:
   input:
     - genome_file
+    - genome_index_dir
     - regions_file
     - stats_file
   output:
