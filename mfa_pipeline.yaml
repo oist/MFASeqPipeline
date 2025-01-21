@@ -68,10 +68,18 @@ map_step:
     set -e
     set -o pipefail
     
+    if [[ "{read1_file}" == *.gz ]]; then
+      cat="zcat"
+    elif [[ "{read1_file}" == *.bz2 ]]; then
+      cat="bzcat"
+    else
+      cat="cat"
+    fi
+    
     rm -f "{bam_file}.in-progress"
     bwa mem -t {step_cores} -v 1 "{genome_index_prefix}" \
-      <(exec zcat "{read1_file}") \
-      <(exec zcat "{read2_file}") \
+      <(exec $cat "{read1_file}") \
+      <(exec $cat "{read2_file}") \
       | samtools sort --threads {step_cores} -m $[{memory_sort_gb}*1024/{step_cores}]M \
           -T {tmp_dir}/{sample}.samtools-sort. \
           -O BAM -l 7 -o "{bam_file}.in-progress" \
