@@ -171,7 +171,8 @@ def execute_job(job):
                 # Report input and output files
                 print("    input:", file=file)
                 for f in input_files:
-                    print(f"         - {f}", file=file)
+                    if f != "":
+                        print(f"         - {f}", file=file)
                 print("    output:", file=file)
                 for f in output_files:
                     print(f"         - {f}", file=file)
@@ -217,6 +218,10 @@ def execute_job(job):
                 if input_name not in tempfiles:
                     # Create a temp file for the input
                     input_file = expand(job_cfg[input_name], job_cfg)
+                    # Skip inputs which expand to an empty string
+                    if input_file == "":
+                        step_cfg[input_name] = ""
+                        continue
                     temp_file = os.path.join(tmp_dir, os.path.basename(input_file))
                     if os.path.isdir(input_file) and not ARGS.dry:
                         # Copy input file to temp file
