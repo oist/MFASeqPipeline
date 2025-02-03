@@ -8,7 +8,7 @@ import pysam
 from intervaltree import IntervalTree, Interval
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "ext", "pyngstuff"))
-from pyngstuff import read_pair_iterator
+import pyngstuff
 
 class Coverage:
     def __init__(self, length : int):
