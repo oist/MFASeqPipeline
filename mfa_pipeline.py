@@ -208,6 +208,9 @@ def execute_job(job):
             tmp_dir = expand(job_cfg["tmp_dir"], job_cfg)
             os.makedirs(tmp_dir, exist_ok=True)
             
+            # Map input directories to temp directories
+            temp_file_dir_map = {}
+            
             # Copy input files to tmp and update config accordingly
             for input_name in input_names:
                 # Copy file to tmp dir unless that's where the current version is
@@ -222,9 +225,22 @@ def execute_job(job):
                     if input_file == "":
                         step_cfg[input_name] = ""
                         continue
-                    temp_file = os.path.join(tmp_dir, os.path.basename(input_file))
+                    # Create subdirs in tmp_dir for different inputs to avoid name clashed
+                    # should the basename of different input files be the same. But re-use
+                    # the same temp dir for input files from the same dir since sometimes
+                    # files are expected to be in the same directory (like a BAM file and its
+                    # index)
+                    input_file_dir = os.path.dirname(input_file)
+                    if input_file_dir in temp_file_dir_map:
+                        temp_file_dir = temp_file_dir_map[input_file_dir]
+                    else:
+                        temp_file_dir = os.path.join(tmp_dir, input_name)
+                        os.makedirs(temp_file_dir, exist_ok=True)
+                        temp_file_dir_map[input_file_dir] = temp_file_dir
+                    # Build final temp file name and copy data
+                    temp_file = os.path.join(temp_file_dir, os.path.basename(input_file))
                     if os.path.isdir(input_file) and not ARGS.dry:
-                        # Copy input file to temp file
+                        # Copy input diretory to temp dir
                         if ARGS.verbose:
                             print(f"    copying directory {input_file}", file=step_stdout)
                             print(f"    to directory {temp_file} ...", file=step_stdout)
@@ -235,6 +251,7 @@ def execute_job(job):
                             print(f"    copying {input_file}", file=step_stdout)
                             print(f"    to {temp_file} ...", file=step_stdout)
                         shutil.copyfile(input_file, temp_file)
+                    # Future references to this input all re-use the copy we just created
                     tempfiles[input_name] = temp_file
                 # Update path in step-specific cfg
                 step_cfg[input_name] = tempfiles[input_name]
@@ -246,13 +263,24 @@ def execute_job(job):
                     temp_file = tempfiles[output_name]
                     raise ExecutionError(f"step output {temp_file} already created by a previous step")
                 # Create a temp file for the output
-                temp_file = os.path.join(tmp_dir, os.path.basename(expand(job_cfg[output_name], job_cfg)))
-                tempfiles[output_name] = temp_file
+                output_file = expand(job_cfg[output_name], job_cfg)
+                # Same directory reuse logic as for input files
+                output_file_dir = os.path.dirname(output_file)
+                if output_file_dir in temp_file_dir_map:
+                    temp_file_dir = temp_file_dir_map[output_file_dir]
+                else:
+                    temp_file_dir = os.path.join(tmp_dir, output_name)
+                    os.makedirs(temp_file_dir, exist_ok=True)
+                    temp_file_dir_map[output_file_dir] = temp_file_dir
+                # Build final temp file name
+                temp_file = os.path.join(temp_file_dir, os.path.basename(output_file))
                 # Remove output file should it already exist
-                if os.path.exists(tempfiles[output_name]) and not ARGS.dry:
-                    os.remove(tempfiles[output_name])
+                if os.path.exists(temp_file) and not ARGS.dry:
+                    os.remove(temp_file)
+                # Future references to this data all re-use the temporary copy this step creates
+                tempfiles[output_name] = temp_file
                 # Update path in step-specific cfg
-                step_cfg[output_name] = tempfiles[output_name]
+                step_cfg[output_name] = temp_file
                 
             # Execute step
             # NOTE: We use the *local* context in the expansions here, i.e. allow step-specific overrides
