@@ -348,7 +348,7 @@ try:
         in_targets = in_targets and "=" not in arg
         if in_targets:
             if arg == "all":
-                ARGS.targets.extend(CFG_CMDLINE["targets"].keys())
+                ARGS.targets.extend(CFG["targets"].keys())
             else:
                 ARGS.targets.append(arg)
         else:
