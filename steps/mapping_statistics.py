@@ -16,6 +16,12 @@ properly_paired_reads = 0
 read_lengths = []
 insert_sizes = []
 for read in bam:
+    # A single read is represented by a single primary alignment (which may be unaligned),
+    # and multiple Supplementary alignments (i.e. 2nd, 3rd etc parts of chimeric alignments)
+    # and/or secondary alignments (i.e. alternative alignment). So to cound reads, we only
+    # count primary alignments.
+    if read.is_supplementary or read.is_secondary:
+        continue
     total_reads += 1
     read_lengths.append(read.query_length)
     if not read.is_unmapped:
