@@ -297,7 +297,7 @@ def execute_job(job):
             # NOTE: We use the *local* context in the expansions here, i.e. allow step-specific overrides
             try:
                 # Create script file
-                (fd, step_cfg["script_file"]) = tempfile.mkstemp(dir=expand(step_cfg["tmp_dir"], step_cfg))
+                (fd, step_cfg["script_file"]) = tempfile.mkstemp(dir=tmp_dir)
                 with os.fdopen(fd, "w") as f:
                     f.write("#!{shell}\n".format_map(step_cfg))
                     f.write(expand(script, step_cfg))
@@ -320,7 +320,8 @@ def execute_job(job):
                     subprocess.run(execute_cmd, shell=True, executable=step_cfg["shell"],
                                    stdout=step_stdout, stderr=step_stdout, check=True)
             finally:
-                os.remove(step_cfg["script_file"])
+                if "script_file" in step_cfg:
+                    os.remove(step_cfg["script_file"])
             if ARGS.verbose and not ARGS.dry:
                 print(f"    ... step completed", file=step_stdout)
                 
