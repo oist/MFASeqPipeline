@@ -122,9 +122,11 @@ def execute_job(job):
     job_cfg = ChainMap(CFG_CMDLINE, job, CFG)
 
     # Create temporary directory for job
-    tmp_dir_base = expand(job_cfg["tmp_dir"], job_cfg)
+    tmp_dir_cfg = expand(job_cfg["tmp_dir"], job_cfg)
+    tmp_dir_base = os.path.dirname(tmp_dir_cfg)
+    tmp_dir_prefix = os.path.basename(tmp_dir_cfg)
     os.makedirs(tmp_dir_base, exist_ok=True)
-    tmp_dir = tempfile.mkdtemp(dir=tmp_dir_base)
+    tmp_dir = tempfile.mkdtemp(dir=tmp_dir_base, prefix=tmp_dir_prefix)
 
     # Keep track for each file whether the newest version is in tmp
     tempfiles = {}

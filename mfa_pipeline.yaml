@@ -1,7 +1,7 @@
 project: ProjectName
 tmp_base_dir: /tmp
 project_dir: '{base_dir}/{project}'
-tmp_dir: '{tmp_base_dir}/{project}/{target_label}/'
+tmp_dir: '{tmp_base_dir}/{project}/{target_label}-'
 fastq_dir: '{project_dir}/fastq'
 meta_dir: '{project_dir}/meta'
 out_dir: '{project_dir}/results'

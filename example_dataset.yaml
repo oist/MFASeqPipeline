@@ -12,10 +12,12 @@ meta_dir: '/path/to/metadata_directory'
 # Directory in which output files are produced
 out_dir: '/path/to/output_directory'
 # Directory for temporary files
-# Note: Names of temporary files are not necessarily unique across the targets defined
-# below, so it's a good idea to include the sample name here to give each target it's
-# own tmp dir.
-tmp_dir: '/tmp/{project}/{target}'
+# Each job get its a private temporary directory whose name starts with {tmp_dir}
+# and has a random suffix. To just generate random names without a prefix, tmp_dir
+# must be set to e.g. "/tmp/", not just "/tmp". Otherwise, the pipeline would
+# try to generate directories like "/tmp<random suffix>" in the root folder. Including
+# the project and target label in the prefix here is just for easier identifiability.
+tmp_dir: '/tmp/{project}-{target_label}-'
 # Reference genome in FASTA format
 genome_file: /path/to/reference/genome_file.fasta
 # Genome name, see steps/fit_velocity_oscillation.R
