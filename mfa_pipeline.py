@@ -121,15 +121,15 @@ def execute_job(job):
     # Create job-specific config
     job_cfg = ChainMap(CFG_CMDLINE, job, CFG)
 
+    # Create temporary directory for job
+    tmp_dir_base = expand(job_cfg["tmp_dir"], job_cfg)
+    os.makedirs(tmp_dir_base, exist_ok=True)
+    tmp_dir = tempfile.mkdtemp(dir=tmp_dir_base)
+
     # Keep track for each file whether the newest version is in tmp
     tempfiles = {}
     def cleanup_tempfiles():
-        for f in tempfiles.values():
-            if os.path.exists(f):
-                if os.path.isdir(f):
-                    shutil.rmtree(f)
-                else:
-                    os.remove(f)
+        shutil.rmtree(tmp_dir)
     atexit.register(cleanup_tempfiles)
     
     # Execute steps
@@ -204,9 +204,6 @@ def execute_job(job):
             # Now that we have a log file, write header
             log_header(step_stdout)
 
-            # Create temporary directory for job
-            tmp_dir = expand(job_cfg["tmp_dir"], job_cfg)
-            os.makedirs(tmp_dir, exist_ok=True)
             
             # Map input directories to temp directories
             temp_file_dir_map = {}
