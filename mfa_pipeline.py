@@ -222,7 +222,7 @@ def execute_job(job):
                     if input_file == "":
                         step_cfg[input_name] = ""
                         continue
-                    # Create subdirs in tmp_dir for different inputs to avoid name clashed
+                    # Create subdirs in tmp_dir for different inputs to avoid name clashes
                     # should the basename of different input files be the same. But re-use
                     # the same temp dir for input files from the same dir since sometimes
                     # files are expected to be in the same directory (like a BAM file and its
