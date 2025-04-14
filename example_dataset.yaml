@@ -34,7 +34,7 @@ execute_cmd: '{script_file}'
 # order listed. Steps whose output files already exist are skipped.
 targets:
   genome:
-    - target: 'genome_index'
+    - target_label: 'genome_index'
       steps: [ genome_index ]
   stationary:
     - sample: stationary_sample_1
