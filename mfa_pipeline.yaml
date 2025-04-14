@@ -16,6 +16,7 @@ cores: 32
 memory_map_gb: 32
 memory_sort_gb: 16
 memory_default_gb: 16
+time_default: '1-0'
 growthrates_file: '{meta_dir}/growthrates.tab'
 growthrate_perhour: $(awk -F'\t' '$1 == "{sample}" {{ print $2 }}' '{growthrates_file}')
 log_file: '{out_dir}/{target_label}.{step}.{log_label}.log'
@@ -42,9 +43,10 @@ abundance_plot_cmd: |
 velocity_oscillation_file: '{out_dir}/{sample}.osc.{velocity_oscillation_model}.tab'
 target_label: '{sample}'
 shell: /bin/bash
-execute_cmd: srun -p compute --mem={step_memory_gb}G -c {step_cores} {script_file}
+execute_cmd: srun -p compute --mem={step_memory_gb}G --time={step_time} -c {step_cores} {script_file}
 step_cores: '{cores}'
 step_memory_gb: '{memory_default_gb}'
+step_time: '{time_default}'
 steps:
   - genome_index
   - map
