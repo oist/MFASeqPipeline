@@ -205,8 +205,12 @@ def execute_job(job):
 
             # Now that we have a log file, write header
             log_header(step_stdout)
-
             
+            # Check whether we should copy input files to tmp_dir and read from there,
+            # and whether we should create ouputs in tmp_dir and copy from there
+            execute_copy_inputs = step_cfg["execute_copy_inputs"] if "execute_copy_inputs" in step_cfg else False
+            execute_copy_outputs = step_cfg["execute_copy_outputs"] if "execute_copy_outputs" in step_cfg else False
+
             # Map input directories to temp directories
             temp_file_dir_map = {}
             
@@ -217,7 +221,7 @@ def execute_job(job):
                 # reason is again that the expansion must agree between steps. For the temp file
                 # we could in principle allow step-specific overrides, but then the name of the
                 # temp file would depend on the step which created it, which seems silly.
-                if input_name not in tempfiles:
+                if execute_copy_inputs and input_name not in tempfiles:
                     # Create a temp file for the input
                     input_file = expand(job_cfg[input_name], job_cfg)
                     # Skip inputs which expand to an empty string
@@ -253,16 +257,24 @@ def execute_job(job):
                     # Future references to this input all re-use the copy we just created
                     tempfiles[input_name] = temp_file
                 # Update path in step-specific cfg
-                step_cfg[input_name] = tempfiles[input_name]
+                if input_name in tempfiles:
+                    step_cfg[input_name] = tempfiles[input_name]
 
             # Generate temp file names for output files
             for output_name in output_names:
+                output_file = expand(job_cfg[output_name], job_cfg)
                 # The output file shouldn't already have a tempfile assigned
                 if output_name in tempfiles:
                     temp_file = tempfiles[output_name]
                     raise ExecutionError(f"step output {temp_file} already created by a previous step")
-                # Create a temp file for the output
-                output_file = expand(job_cfg[output_name], job_cfg)
+                # Just make sure the output directory exists if we're not copying outputs
+                if not execute_copy_outputs:
+                    # Create directory
+                    dir_name = os.path.dirname(output_file)
+                    if len(dir_name) > 0:
+                        os.makedirs(dir_name, exist_ok=True)
+                    continue
+                # Otherwise, map output file to a file in tmp_dir
                 # Same directory reuse logic as for input files
                 output_file_dir = os.path.dirname(output_file)
                 if output_file_dir in temp_file_dir_map:
@@ -316,10 +328,16 @@ def execute_job(job):
             if ARGS.dry:
                 continue
             
-            # Copy output files from tmp
+            # Copy output files from tmp_dir
             for output_name in output_names:
-                temp_file = tempfiles[output_name]
                 output_file = expand(job_cfg[output_name], job_cfg)
+                # Just check that the output exists if we're not copying outputs
+                if not execute_copy_outputs:
+                    if not os.path.exists(output_file):
+                        raise ExecutionError(f"step failed to produce {output_file}")
+                    continue
+                # Otherwise, copy output from tmp_dir
+                temp_file = tempfiles[output_name]
                 if not os.path.exists(temp_file):
                     raise ExecutionError(f"step failed to produce {temp_file}")
                 if os.path.isdir(temp_file):

@@ -44,6 +44,8 @@ velocity_oscillation_file: '{out_dir}/{sample}.osc.{velocity_oscillation_model}.
 target_label: '{sample}'
 shell: /bin/bash
 execute_cmd: srun -p compute --mem={step_memory_gb}G --time={step_time} -c {step_cores} {script_file}
+execute_copy_inputs: False
+execute_copy_outputs: True
 step_cores: '{cores}'
 step_memory_gb: '{memory_default_gb}'
 step_time: '{time_default}'

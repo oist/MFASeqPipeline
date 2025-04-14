@@ -24,10 +24,21 @@ genome_file: /path/to/reference/genome_file.fasta
 genome_name: EColiMG1655
 # Size of window over which the coverage is averaged
 windowsize: 10k
-# Command used to run individual steps.
+# Command used to run individual steps
 # Note: To run steps on a slurm cluster, use an execute_cmd like
 # execute_cmd: srun -p compute --mem={step_memory_gb}G -c {step_cores} {script_file}
+# When running on a cluster, it may be that not all storage is accessible from the
+# cluster nodes, or that only accessible read-only. In the case of read-only data,
+# set execute_copy_outputs to true to have jobs create output files within tmp_dir
+# and to copy from there later. In the case of completely inaccessible storage, also
+# set execute_copy_inputs to True to copy input data to tmp_dir and have jobs read it
+# from there. If either execute_copy_inputs or execute_copy_outputs is True, tmp_dir
+# must point to storage that is accessible *both* from the system running the pipeline
+# from the cluster nodes executing scripts. Shared-nothing clusters are currently not
+# supported.
 execute_cmd: '{script_file}'
+execute_copy_inputs: False
+execute_copy_outputs: False
 # Targets and target groups definitions. Each target group (stationary and exponential
 # below) comprises a list of targetss. Each target consists of a list of variables to set,
 # and the steps that are to be executed for that target. Targets can define and override
