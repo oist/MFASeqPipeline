@@ -127,6 +127,7 @@ def execute_job(job):
     tmp_dir_prefix = os.path.basename(tmp_dir_cfg)
     os.makedirs(tmp_dir_base, exist_ok=True)
     tmp_dir = tempfile.mkdtemp(dir=tmp_dir_base, prefix=tmp_dir_prefix)
+    job_cfg = ChainMap({'tmp_dir': tmp_dir}, job_cfg)
 
     # Keep track for each file whether the newest version is in tmp
     tempfiles = {}
