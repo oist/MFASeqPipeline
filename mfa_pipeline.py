@@ -222,13 +222,13 @@ def execute_job(job):
                 # reason is again that the expansion must agree between steps. For the temp file
                 # we could in principle allow step-specific overrides, but then the name of the
                 # temp file would depend on the step which created it, which seems silly.
+                input_file = expand(job_cfg[input_name], job_cfg)
+                # Skip inputs which expand to an empty string
+                if input_file == "":
+                    step_cfg[input_name] = ""
+                    continue
                 if execute_copy_inputs and input_name not in tempfiles:
-                    # Create a temp file for the input
-                    input_file = expand(job_cfg[input_name], job_cfg)
-                    # Skip inputs which expand to an empty string
-                    if input_file == "":
-                        step_cfg[input_name] = ""
-                        continue
+                    # Create a temp file for the input.
                     # Create subdirs in tmp_dir for different inputs to avoid name clashes
                     # should the basename of different input files be the same. But re-use
                     # the same temp dir for input files from the same dir since sometimes
@@ -260,6 +260,8 @@ def execute_job(job):
                 # Update path in step-specific cfg
                 if input_name in tempfiles:
                     step_cfg[input_name] = tempfiles[input_name]
+                else:
+                    step_cfg[input_name] = input_file
 
             # Generate temp file names for output files
             for output_name in output_names:
@@ -270,6 +272,7 @@ def execute_job(job):
                     raise ExecutionError(f"step output {temp_file} already created by a previous step")
                 # Just make sure the output directory exists if we're not copying outputs
                 if not execute_copy_outputs:
+                    step_cfg[output_name] = output_file
                     # Create directory
                     dir_name = os.path.dirname(output_file)
                     if len(dir_name) > 0:
@@ -293,7 +296,7 @@ def execute_job(job):
                 tempfiles[output_name] = temp_file
                 # Update path in step-specific cfg
                 step_cfg[output_name] = temp_file
-                
+
             # Execute step
             # NOTE: We use the *local* context in the expansions here, i.e. allow step-specific overrides
             try:
