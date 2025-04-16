@@ -19,7 +19,7 @@ memory_default_gb: 16
 time_default: '1-0'
 growthrates_file: '{meta_dir}/growthrates.tab'
 growthrate_perhour: $(awk -F'\t' '$1 == "{sample}" {{ print $2 }}' '{growthrates_file}')
-log_file: '{out_dir}/{target_label}.{step}.{log_label}.log'
+log_file: '{out_dir}/{target_label}.{step}{log_label}.log'
 log_label: ''
 read1_file: '{fastq_dir}/{sample}_r1.fastq.gz'
 read2_file: '{fastq_dir}/{sample}_r2.fastq.gz'
@@ -151,7 +151,7 @@ abundance_step:
      - abundance_file
   override:
     step_cores: 1
-    log_label: 'w{windowsize}bp'
+    log_label: '.w{windowsize}bp'
   script: |
     {mfa_pipeline_dir}/steps/abundance.py \
       "{bam_file}" "{mappability_file}" \
