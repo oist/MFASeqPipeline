@@ -40,6 +40,8 @@ parser.add_argument("--catch", default=None, action='store_true',
                     help="continue with other targets if a target fails")
 parser.add_argument("--no-catch", dest='catch', action='store_false',
                     help="stop if a target fails")
+parser.add_argument("--keep", default=False, action='store_true',
+                    help="Save ouputs of failed targets")
 parser.add_argument("--verbose", default=False, action='store_true',
                     help="more extensive logging")
 parser.add_argument("--steps", type=lambda s: s.split(","),
@@ -303,6 +305,7 @@ def execute_job(job):
 
             # Execute step
             # NOTE: We use the *local* context in the expansions here, i.e. allow step-specific overrides
+            subprocess_failed = None
             try:
                 # Create script file
                 (fd, step_cfg["script_file"]) = tempfile.mkstemp(dir=tmp_dir)
@@ -325,13 +328,18 @@ def execute_job(job):
                     if not ARGS.dry:
                         print(f"    running step ...", file=step_stdout)
                 if not ARGS.dry:
-                    subprocess.run(execute_cmd, shell=True, executable=step_cfg["shell"],
-                                   stdout=step_stdout, stderr=step_stdout, check=True)
+                    try:
+                        subprocess.run(execute_cmd, shell=True, executable=step_cfg["shell"],
+                                       stdout=step_stdout, stderr=step_stdout, check=True)
+                    except Exception as e:
+                        # If we're supposed to keep outputs of failed targets we musn't raise here
+                        if ARGS.keep:
+                            subprocess_failed = e
+                        else:
+                            raise e
             finally:
                 if "script_file" in step_cfg:
                     os.remove(step_cfg["script_file"])
-            if ARGS.verbose and not ARGS.dry:
-                print(f"    ... step completed", file=step_stdout)
                 
             # In dry mode, we're done
             if ARGS.dry:
@@ -341,14 +349,20 @@ def execute_job(job):
             for output_name in output_names:
                 output_file = expand(job_cfg[output_name], job_cfg)
                 # Just check that the output exists if we're not copying outputs
+                # Only comply about missing ouputs for targets that succeeded
                 if not execute_copy_outputs:
-                    if not os.path.exists(output_file):
+                    if not os.path.exists(output_file) and subprocess_failed is None:
                         raise ExecutionError(f"step failed to produce {output_file}")
+                    # TODO: If the subprocess failed and ARGS.keep is not set, should we remove?
                     continue
                 # Otherwise, copy output from tmp_dir
+                # Only comply about missing ouputs for targets that succeeded
                 temp_file = tempfiles[output_name]
                 if not os.path.exists(temp_file):
-                    raise ExecutionError(f"step failed to produce {temp_file}")
+                    if subprocess_failed is None:
+                        raise ExecutionError(f"step failed to produce {temp_file}")
+                    else:
+                        continue
                 if os.path.isdir(temp_file):
                     if ARGS.verbose:
                         print(f"    copying directory {temp_file}", file=step_stdout)
@@ -366,7 +380,14 @@ def execute_job(job):
                     shutil.copy(temp_file, output_file)
 
             if ARGS.verbose:
-                print(f"    done.", file=step_stdout)
+                if subprocess_failed is None:
+                    print(f"    step done.", file=step_stdout)
+                else:
+                    print(f"    step failed.", file=step_stdout)
+                    
+            # Finally, re-raise failed subprocess error we caught earlier
+            if subprocess_failed:
+                raise subprocess_failed
     except Exception as e:
         if ARGS.catch:
             return e
