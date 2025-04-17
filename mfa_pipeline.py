@@ -33,9 +33,13 @@ parser.add_argument("--jobs", default=1, type=int,
                     help="number of parallel jobs to run")
 parser.add_argument("--quiet", default=None, action='store_true',
                     help="do not log to stdout (defaults to true in case of parallel jobs)")
+parser.add_argument("--no-quiet", dest='quiet', action='store_false')
 parser.add_argument("--dry", default=None, action='store_true',
                     help="don't run steps, only print input and output files")
-parser.add_argument("--no-quiet", dest='quiet', action='store_false')
+parser.add_argument("--catch", default=None, action='store_true',
+                    help="continue with other targets if a target fails")
+parser.add_argument("--no-catch", dest='catch', action='store_false',
+                    help="stop if a target fails")
 parser.add_argument("--verbose", default=False, action='store_true',
                     help="more extensive logging")
 parser.add_argument("--steps", type=lambda s: s.split(","),
@@ -363,11 +367,17 @@ def execute_job(job):
 
             if ARGS.verbose:
                 print(f"    done.", file=step_stdout)
+    except Exception as e:
+        if ARGS.catch:
+            return e
+        else:
+            raise e
     finally:
         # Remove temporary files
         cleanup_tempfiles()
         atexit.unregister(cleanup_tempfiles)
 
+error_code = 0
 try:
     # Parse arguments
     # NOTE: The parser cannot actually distinguish between target and
@@ -377,6 +387,9 @@ try:
 
     if ARGS.quiet is None:
         ARGS.quiet = (ARGS.jobs > 1)
+        
+    if ARGS.catch is None:
+        ARGS.catch = (len(ARGS.targets) > 0)
 
     # Load config
     CFG = load_config(ARGS.config)
@@ -420,7 +433,9 @@ try:
             if not ARGS.quiet:
                 print(f'=== TARGET: {target}')
             for r in POOL.map(execute_job, CFG["targets"][target]):
-                pass
+                if isinstance(r, Exception):
+                    print(f'WARNING: {e.reason}')
+                    error_code = 1
             if not ARGS.quiet:
                 print(f'=== COMPLETED TARGET: {target}')
     else:
@@ -431,3 +446,5 @@ except KeyError as e:
 except Exception as e:
     print(f"ERROR: {e}", file=sys.stderr)
     sys.exit(1)
+
+sys.exit(error_code)
