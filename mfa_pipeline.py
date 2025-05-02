@@ -464,6 +464,7 @@ try:
             if not ARGS.quiet:
                 print(f'=== COMPLETED TARGET: {target}')
     else:
+        ARGS.catch = False
         execute_job({})
 except KeyError as e:
     print(f"ERROR: Variable {e} is not defined", file=sys.stderr)
