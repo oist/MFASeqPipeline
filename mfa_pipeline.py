@@ -467,9 +467,11 @@ try:
         execute_job({})
 except KeyError as e:
     print(f"ERROR: Variable {e} is not defined", file=sys.stderr)
-    sys.exit(1)
+    print(e.reason)
+    error_code = 1
 except Exception as e:
     print(f"ERROR: {e}", file=sys.stderr)
-    sys.exit(1)
+    print(e.reason)
+    error_code = 1
 
 sys.exit(error_code)
