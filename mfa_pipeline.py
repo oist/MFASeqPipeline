@@ -454,8 +454,12 @@ try:
             if not ARGS.quiet:
                 print(f'=== TARGET: {target}')
             for r in POOL.map(execute_job, CFG["targets"][target]):
-                if isinstance(r, Exception):
-                    print(f'WARNING: {e.reason}')
+                if isinstance(r, KeyError):
+                    print(f'TARGET FAILED: Variable {r} is not defined')
+                    error_code = 1
+                elif isinstance(r, Exception):
+                    print(f'TARGET FAILED: {r}')
+                    print(type(r))
                     error_code = 1
             if not ARGS.quiet:
                 print(f'=== COMPLETED TARGET: {target}')
