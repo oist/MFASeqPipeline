@@ -172,6 +172,12 @@ def execute_job(job):
             input_files = [expand(job_cfg[f], job_cfg) for f in input_names]
             output_files = [expand(job_cfg[f], job_cfg) for f in output_names]
             
+            # Determine name of log file (if any)
+            if "log_file" in step_cfg:
+                log_file = expand(step_cfg["log_file"], step_cfg)
+            else:
+                log_file = None
+            
             # Function to write log header listing input and outputs
             def log_header(file):
                 title_name = step_name.upper()
@@ -185,6 +191,10 @@ def execute_job(job):
                 print("    output:", file=file)
                 for f in output_files:
                     print(f"         - {f}", file=file)
+                
+                # Report log
+                if log_file is not None:
+                    print(f"    log: {log_file}", file=file)
 
             # Check if the step needs to be executed
             if all([os.path.exists(f) for f in output_files]):
@@ -195,8 +205,7 @@ def execute_job(job):
                 continue
 
             # Redirecet stdout to the log file
-            if "log_file" in step_cfg and not ARGS.dry:
-                log_file = expand(step_cfg["log_file"], step_cfg)
+            if log_file is not None and not ARGS.dry:
                 # Create directory if it does not exist
                 log_dir_name = os.path.dirname(log_file)
                 if len(log_dir_name) > 0:
