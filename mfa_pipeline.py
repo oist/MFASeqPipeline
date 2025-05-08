@@ -464,10 +464,10 @@ try:
                 print(f'=== TARGET: {target}')
             for r in POOL.map(execute_job, CFG["targets"][target]):
                 if isinstance(r, KeyError):
-                    print(f'TARGET FAILED: Variable {r} is not defined')
+                    print(f'JOB FAILED: Variable {r} is not defined')
                     error_code = 1
                 elif isinstance(r, Exception):
-                    print(f'TARGET FAILED: {r}')
+                    print(f'JOB FAILED: {r}')
                     print(type(r))
                     error_code = 1
             if not ARGS.quiet:
