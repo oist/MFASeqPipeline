@@ -110,15 +110,24 @@ def expand(value, cfg=CFG):
     # string. This makes it possible to use {{ and }} to represent { and }
     # despite our iterated calls of format_map()
     vq = value.replace("{{", "{{{{").replace("}}", "}}}}")
-    vp = vq.format_map(cfg)
+    try:
+        vp = vq.format_map(cfg)
+    except KeyError as e:
+        raise ConfigurationError(f"configuration key {e} is undefined during expansion of:\n{value}")
     i = 0
+    stack = [value]
     while value != vp:
         if i > 100:
           raise ConfigurationError("configuration key {key} expands indefinitely")
         value = vp
         # Same quoting of {{ and }} as above
         vq = value.replace("{{", "{{{{").replace("}}", "}}}}")
-        vp = vq.format_map(cfg)
+        stack.append(value)
+        try:
+            vp = vq.format_map(cfg)
+        except KeyError as e:
+            ctxt = "\nproduced by expanding\n".join(reversed(stack))
+            raise ConfigurationError(f"configuration key {e} is undefined during expansion of:\n{ctxt}")
         i += 1
     return value.replace("{{", "{").replace("}}", "}")
 
