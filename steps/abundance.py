@@ -3,6 +3,7 @@ import sys
 import os
 import io
 import gzip
+import math
 import numpy as np
 import pysam
 from intervaltree import IntervalTree, Interval
@@ -54,15 +55,21 @@ class Coverage:
         return np.cumsum(self.deltas)
         
     def fragment_length(self) -> float:
-        return int(self.fragment_length_sum / self.fragment_length_count)
+        if self.fragment_length_count > 0:
+            return round(self.fragment_length_sum / self.fragment_length_count)
+        else:
+            return math.nan
         
-def fragment_coverage(wsize: int, flen: int) -> float:
+def fragment_coverage(wsize: int, flen_float: float) -> float:
     # Compute coverage length, i.e. average number of bases of a fragment that covers a window
     # For fragments of length k and the window [0, n), fragments that overlap the window start at
     # a base in (-k, n) = [-k+1, n-1]. A fragment that starts at base i covers the bases
     # [i, i + k - 1], and overlaps the window on [ max(i, 0), min(i + k - 1, n - 1) ]. The
     # expected coverage (assuming uniformly distributed starting points) is thus
     #      [ sum i=-k+1 to n-1 min(i + k, n) - max(i, 0) ] / (n - k + 1)
+    if not math.isfinite(flen_float):
+        return math.nan
+    flen: int = int(round(flen_float))
     return sum([ min([i + flen, wsize]) - max([i, 0])
                  for i in range(-flen+1, wsize)]) / (wsize + flen - 1)
 
