@@ -199,14 +199,15 @@ def execute_job(job):
                         print(f"         - {f}", file=file)
                 print("    output:", file=file)
                 for f in output_files:
-                    print(f"         - {f}", file=file)
+                    if f != "":
+                        print(f"         - {f}", file=file)
                 
                 # Report log
                 if log_file is not None:
                     print(f"    log: {log_file}", file=file)
 
             # Check if the step needs to be executed
-            if all([os.path.exists(f) for f in output_files]):
+            if all([os.path.exists(f) for f in output_files if f != ""]):
                 # Only write to stdout if we"re not running jobs concurrently
                 if not ARGS.quiet:
                     log_header(sys.stdout)
@@ -290,6 +291,10 @@ def execute_job(job):
             # Generate temp file names for output files
             for output_name in output_names:
                 output_file = expand(job_cfg[output_name], job_cfg)
+                # Skip outputs which expand to an empty string
+                if output_file == "":
+                    step_cfg[output_name] = ""
+                    continue
                 # The output file shouldn't already have a tempfile assigned
                 if output_name in tempfiles:
                     temp_file = tempfiles[output_name]
@@ -366,6 +371,9 @@ def execute_job(job):
             # Copy output files from tmp_dir
             for output_name in output_names:
                 output_file = expand(job_cfg[output_name], job_cfg)
+                # Skip outputs which expand to an empty string
+                if output_file == "":
+                    continue
                 # Just check that the output exists if we're not copying outputs
                 # Only comply about missing ouputs for targets that succeeded
                 if not execute_copy_outputs:
@@ -374,7 +382,7 @@ def execute_job(job):
                     # TODO: If the subprocess failed and ARGS.keep is not set, should we remove?
                     continue
                 # Otherwise, copy output from tmp_dir
-                # Only comply about missing ouputs for targets that succeeded
+                # Only complain about missing ouputs for targets that succeeded
                 temp_file = tempfiles[output_name]
                 if not os.path.exists(temp_file):
                     if subprocess_failed is None:
