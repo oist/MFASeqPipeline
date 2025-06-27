@@ -1,0 +1,54 @@
+fastq_step:
+    output:
+        - read1_file
+        - read2_file
+    override:
+        step_cores: 2
+    script: |
+        set -e
+        set -o pipefail
+
+        cd "{tmp_dir}"
+        rm -rf "fastq"
+        mkdir fastq
+        cd fastq
+
+        echo "Downloading {accession} ..." >&2
+        pids=( )
+        for acc in $(echo "{accession}" | tr "," " "); do
+            fasterq-dump --split-3 "$acc" & pids+=( $! )
+        done
+        for pid in "${{pids[@]}}"; do
+            wait "$pid" || exit
+        done
+        
+        for acc in $(echo "{accession}" | tr "," " "); do
+            if [[ -e "$acc.fastq" ]]; then
+                echo "WARNING: Ignoring single-end reads for accession $acc" >&2
+            fi
+        done
+        
+        fq1=$(for acc in $(echo "{accession}" | tr "," " "); do echo -n "$acc""_1.fastq" " "; done)
+        fq2=$(for acc in $(echo "{accession}" | tr "," " "); do echo -n "$acc""_2.fastq" " "; done)
+        pids=( )
+        if [[ "{read1_file}" == *.gz ]]; then
+            echo "Compressing and combining $fq1 to produce {read1_file}"
+            cat $fq1 | gzip -c > "{read1_file}" & pids+=( $! )
+        else
+            echo "Combining $fq1 to produce {read1_file}"
+            cat $fq1 > "{read1_file}" & pids+=( $! )
+        fi
+        if [[ "{read2_file}" == *.gz ]]; then
+            echo "Compressing and combining $fq2 to produce {read2_file}"
+            cat $fq2 | gzip -c > "{read2_file}" & pids+=( $! )
+        else
+            echo "Combining $fq2 to produce {read2_file}"
+            cat $fq2 > "{read2_file}" & pids+=( $! )
+        fi
+        
+        echo "Waiting for jobs to complete ..."
+        for pid in "${{pids[@]}}"; do
+            wait "$pid" || exit
+        done
+        echo "Done."
+
