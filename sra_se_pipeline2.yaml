@@ -1,0 +1,40 @@
+fastq_step:
+    output:
+        - read_file
+    override:
+        step_cores: 1
+    script: |
+        set -e
+        set -o pipefail
+
+        cd "{tmp_dir}"
+        rm -rf "fastq"
+        mkdir fastq
+        cd fastq
+
+        echo "Downloading {accession} ..." >&2
+        pids=( )
+        for acc in $(echo "{accession}" | tr "," " "); do
+            fasterq-dump --split-3 "$acc" & pids+=( $! )
+        done
+        for pid in "${{pids[@]}}"; do
+            wait "$pid" || exit
+        done
+        
+        for acc in $(echo "{accession}" | tr "," " "); do
+            if [[ -e "$acc_1.fastq" ]] || [[ -e "$acc_2.fastq" ]]; then
+                echo "WARNING: Ignoring paired-end reads" >&2
+            fi
+        done
+        
+        fq=$(for acc in $(echo "{accession}" | tr "," " "); do echo -n "$acc"".fastq" " "; done)
+        pids=( )
+        if [[ "{read_file}" == *.gz ]]; then
+            echo "Compressing and combining $fq to produce {read_file}"
+            cat $fq | gzip -c > "{read_file}"
+        else
+            echo "Combining $fq to produce {read_file}"
+            cat $fq > "{read_file}"
+        fi
+        echo "Done."
+
