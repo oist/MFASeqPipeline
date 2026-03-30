@@ -29,6 +29,8 @@ parser = argparse.ArgumentParser(
     prog="MFASeqPipeline", 
     description="Process MFA-Seq data")
 
+parser.add_argument("--list-targets", default=False, action='store_true',
+                    help="list all defined targets")
 parser.add_argument("--jobs", default=1, type=int,
                     help="number of parallel jobs to run")
 parser.add_argument("--quiet", default=None, action='store_true',
@@ -58,6 +60,7 @@ CFG_SEARCHPATH = [ "./", os.path.dirname(os.path.realpath(__file__)) ]
 # Set later
 CFG = None
 CFG_CMDLINE = None
+TARGETS = None
 
 # Load config
 def load_config(name):
@@ -92,7 +95,6 @@ def load_config(name):
             base.update(cfg)
             cfg = base
     return cfg
-
 
 # Function to expand configuration settings
 def expand(value, cfg=CFG):
@@ -130,6 +132,94 @@ def expand(value, cfg=CFG):
             raise ConfigurationError(f"configuration key {e} is undefined during expansion of:\n{ctxt}")
         i += 1
     return value.replace("{{", "{").replace("}}", "}")
+
+# Add targets from dictionary tdefs into global TARGETS list
+def add_targets(tdefs, tpath=[], tcfg=None):
+    global TARGETS
+    if (not isinstance(tdefs, dict)):
+        raise ConfigurationError(f"'targets' must be a dictionary, but found a {type(tdefs)}")
+    for tname, tdef in tdefs.items():
+        if (tname not in TARGETS):
+            TARGETS[tname] = list()
+        add_target(tdef, tpath + [tname], tcfg)
+
+# Add a target defined by tdef into global TARGETS list
+#
+# A target can be
+#   a) A "target group" comprising named targets. Target groups are represented by a dictionary.
+#      A special key "overrides" can be used to override configuration settings for the whole group
+#   b) A "job list" comprising a list of jobs. Job lists are represented either by a list of dictionaries,
+#      with each dictionary containing the configuration settings for one job. Or by a dictionary
+#      where the special key "targets" contains the job list. In this case, the special key "overrides"
+#      can be used to override configuration settings for the whole list. If any other key is present,
+#      it is treated as a named subtarget as in (a), making the target both a job list and a target group
+#
+# The top-level "targets" settings must be a target group. At lower levels, "target groups" and "job lists"
+# can be nested freely. When "target groups" are  (including "job lists" inside "job lists"; this however requires representing the
+# upper-level job lists are dictionaries, not plain lists.
+#
+# Examples:
+#
+# 1. A target "target_a_listing_jobs" which simply lists jobs
+# targets:
+#   jobs_A_and_B:
+#     - sample: A
+#       some_setting: value_for_sample_A 
+#     - sample: B
+#       some_setting: value_for_sample_B
+#
+# 2. Three targets where "jobs_C_D_and_more" contains all jobs in "jobs_C_D" and all job in "more_jobs".
+#   jobs_C_D_and_more:
+#     jobs_C_D:
+#       override:
+#         some_other_setting: value_for_samples_C_and_D
+#       targets:
+#         - sample: C
+#           some_setting: value_for_sample_C
+#         - sample: D
+#           some_setting: value_for_sample_D:
+#     more_jobs:
+#       ...
+#
+# 3. A target "jobs_E+" which contains jobs for sample E-H with some settings shared between the jobs.
+#    Equivalent to a simple job list that repeats the shared settings for each job
+#   jobs_E+:
+#     override:
+#       some_other_settings: value_for_samples_E-H
+#     targets:
+#       - override:
+#           some_third_settings: value_for_samples_E_F 
+#         targets:
+#           - sample: E
+#           - sample: F
+#       - override:
+#           some_third_setting: value_for_samples_G_H
+#         targets:
+#           - sample: G
+#           - sample: H
+#           ...
+def add_target(tdef, tpath=[], tcfg=None):
+    global TARGETS
+    if isinstance(tdef, list):
+        # Job list
+        for job in tdef:
+            jcfg = ChainMap(job, tcfg) if tcfg is not None else job
+            for tname in tpath:
+                TARGETS[tname].append({'job': jcfg, 'path': tpath})
+    elif isinstance(tdef, dict):
+        # Target group
+        tdef = tdef.copy()
+        if "override" in tdef:
+            if (not isinstance(tdef["override"], dict)):
+                raise ConfigurationError(f"in target '{'/'.join(tpath)}', 'override' must be a dictionary but found a {type(tdef['override'])}")
+            tcfg = ChainMap(tdef["override"], tcfg) if tcfg is not None else tdef["override"]
+            del tdef["override"]
+        if "targets" in tdef:
+            add_target(tdef["targets"], tpath, tcfg)
+            del tdef["targets"]
+        add_targets(tdef, tpath, tcfg)
+    else:
+        raise ConfigurationError(f"target '{'/'.join(tpath)}' should be a list or a dictionary but found {type(tdef)}")
 
 # Function to execute all requested steps
 def execute_job(job):
@@ -468,18 +558,34 @@ try:
             try:
                 key, value = key_value[0], yaml.safe_load(io.StringIO(key_value[1]))
             except yaml.parser.ParserError as e:
-                raise ArgumentError(f"invalid YAM syntax in: {key_value[0]}={key_value[1]}\n{e}") from e
+                raise ArgumentError(f"invalid YAML syntax in: {key_value[0]}={key_value[1]}\n{e}") from e
             CFG_CMDLINE[key] = value
+
+    # Build list of targets
+    TARGETS = {}
+    add_targets(CFG["targets"])
+    
+    # List targets if requested and exit
+    if ARGS.list_targets:
+        for tname, tgts in TARGETS.items():
+            print(f'=== TARGET: {tname}')
+            for tgt in tgts:
+                tjob, tpath = tgt["job"], tgt["path"]
+                first = True
+                for n, v in tjob.items():
+                    print(f'  {"-" if first else " "} {n}: {v}')
+                    first = False
+        sys.exit(0)
 
     # Execute all jobs in target
     if len(ARGS.targets) > 0:
         POOL = concurrent.futures.ThreadPoolExecutor(max_workers=ARGS.jobs)
         for target in ARGS.targets:
-            if target not in CFG["targets"]:
+            if target not in TARGETS:
                 raise ArgumentError(f"invalid target {target}")
             if not ARGS.quiet:
                 print(f'=== TARGET: {target}')
-            for r in POOL.map(execute_job, CFG["targets"][target]):
+            for r in POOL.map(execute_job, [ t['job'] for t in TARGETS[target] ]):
                 if isinstance(r, KeyError):
                     print(f'JOB FAILED: Variable {r} is not defined')
                     error_code = 1
