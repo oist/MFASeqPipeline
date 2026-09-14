@@ -1,0 +1,3 @@
+[submodule "steps/mori"]
+	path = steps/mori
+	url = git@github.com:oist/MORI.git
