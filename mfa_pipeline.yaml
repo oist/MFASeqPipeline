@@ -9,8 +9,23 @@ genome_file: '{base_dir}/genome.fasta'
 genome_index_dir: '{genome_file}.bwaidx'
 genome_index_prefix: '{genome_index_dir}/index'
 genome_circular: True
-velocity_oscillation_model: vt
 protocol: sort-seq
+velocity_oscillation_model: vt
+velogp_origins: oriC
+velogp_vx_types: rRNA
+velogp_vx_names: terA,terB,terC,terD,terE,terF,terG,terH,terI,terJ
+velogp_vx_delayscale: 0.01
+velogp_vt_timescale: 0.2
+velogp_vt_magnitude: 0.25
+velogp_abundance_file: '{out_dir}/{sample}.velogp.abd.gz'
+velogp_abundance_plot: '{out_dir}/{sample}.velogp.abd.pdf'
+velogp_vt_file: '{out_dir}/{sample}.velogp.vt.gz'
+velogp_vt_plot: '{out_dir}/{sample}.velogp.vt.pdf'
+velogp_vx_file: '{out_dir}/{sample}.velogp.vx.gz'
+velogp_model_file: '{out_dir}/{sample}.velogp.model.pkl'
+velogp_objects_file: '{out_dir}/{sample}.velogp.objs.pkl'
+velogp_abd_columns: 'seq,midpoint,coverage_ratio,coverage_ratio_stderr,ratio_mappable'
+velogp_extra_args: ''
 mori_gamma: 8
 mori_ignore: ''
 mori_seed: 42
@@ -186,6 +201,42 @@ velocity_oscillation_step:
     {mfa_pipeline_dir}/steps/fit_velocity_oscillation.R \
       "{genome_name}" "{velocity_oscillation_model}" "{growthrate_perhour}" "{abundance_file}" "{velocity_oscillation_file}" \
       "{step_cores}"
+velogp_step:
+  input:
+    - abundance_file
+    - genome_file
+    - genome_annotation_file
+    - origin_file
+  output:
+    - velogp_abundance_file
+    - velogp_abundance_plot
+    - velogp_vt_file
+    - velogp_vt_plot
+    - velogp_vx_file
+    - velogp_model_file
+    - velogp_objects_file
+  script: |
+    PYTHONPATH="{mfa_pipeline_dir}/steps/velogp" python -m velogp \
+      --cores "{step_cores}" \
+      --genome "{genome_file}" \
+      --gff "{genome_annotation_file}" \
+      --bed "{origin_file}" \
+      --columns "{velogp_abd_columns}" \
+      --vx-feature-types "{velogp_vx_types}" \
+      --vx-feature-names "{velogp_vx_names}" \
+      --vt-timescale "{velogp_vt_timescale}" \
+      --vt-magnitude "{velogp_vt_magnitude}" \
+      --out-abundance "{velogp_abundance_file}" \
+      --out-trajectories "{velogp_vt_file}" \
+      --out-vx-feature-delays "{velogp_vx_file}" \
+      --out-model "{velogp_model_file}" \
+      --out-objects "{velogp_objects_file}" \
+      --plot-vt "{velogp_vt_plot}" \
+      --plot-abundance "{velogp_abundance_plot}" \
+      --origins "{origins}" \
+      --growthrate "{growthrate_perhour}" \
+      {velogp_extra_args} \
+      "{abundance_file}"
 mori_step:
   input:
     - abundance_file
