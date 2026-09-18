@@ -249,6 +249,7 @@ mori_step:
   override:
     step_cores: 4
     step_time: 4-0
+    log_label: '.g{mori_gamma}'
   script: |
     set -e
     set -o pipefail
