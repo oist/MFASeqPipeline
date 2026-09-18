@@ -215,6 +215,8 @@ velogp_step:
     - velogp_vx_file
     - velogp_model_file
     - velogp_objects_file
+  override:
+    step_cores: 4
   script: |
     PYTHONPATH="{mfa_pipeline_dir}/steps/velogp" python -m velogp \
       --cores "{step_cores}" \
