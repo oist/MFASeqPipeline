@@ -205,7 +205,7 @@ velogp_step:
   input:
     - abundance_file
     - genome_file
-    - genome_annotation_file
+    - gff_file
     - origin_file
   output:
     - velogp_abundance_file
@@ -219,7 +219,7 @@ velogp_step:
     PYTHONPATH="{mfa_pipeline_dir}/steps/velogp" python -m velogp \
       --cores "{step_cores}" \
       --genome "{genome_file}" \
-      --gff "{genome_annotation_file}" \
+      --gff "{gff_file}" \
       --bed "{origin_file}" \
       --columns "{velogp_abd_columns}" \
       --vx-feature-types "{velogp_vx_types}" \
