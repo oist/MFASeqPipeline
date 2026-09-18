@@ -197,6 +197,7 @@ mori_step:
     - mori_output_dir
   override:
     step_cores: 4
+    step_time: 4-0
   script: |
     set -e
     set -o pipefail
