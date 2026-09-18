@@ -13,6 +13,7 @@ velocity_oscillation_model: vt
 protocol: sort-seq
 mori_gamma: 8
 mori_ignore: ''
+mori_seed: 42
 windowsize: 10k
 mapping_quality: 20
 cores: 32
@@ -211,6 +212,7 @@ mori_step:
       --abundances "{abundance_file}" \
       --growthrate $(awk 'BEGIN {{print {growthrate_perhour}/3600}}') \
       --gamma "{mori_gamma}" \
+      --random-seed "{mori_seed}" \
       $(IFS=' ' ; echo "${{ignore[*]/#/--remove-sequence }}") \
       --output-prefix "${{MORI_PREFIX}}" \
       --log iteration \
