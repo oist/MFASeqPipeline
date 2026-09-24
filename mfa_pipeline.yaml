@@ -25,6 +25,8 @@ velogp_vx_file: '{out_dir}/{sample}.velogp.vx.gz'
 velogp_model_file: '{out_dir}/{sample}.velogp.model.pkl'
 velogp_objects_file: '{out_dir}/{sample}.velogp.objs.pkl'
 velogp_abd_columns: 'seq,midpoint,coverage_ratio,coverage_ratio_stderr,ratio_mappable'
+velogp_seed: 42
+velogp_rounds: 1000
 velogp_extra_args: ''
 mori_gamma: 8
 mori_ignore: ''
@@ -237,6 +239,8 @@ velogp_step:
       --plot-abundance "{velogp_abundance_plot}" \
       --origins "{origins}" \
       --growthrate "{growthrate_perhour}" \
+      --seed "{velogp_seed}" \
+      --rounds "{velogp_rounds}" \
       {velogp_extra_args} \
       "{abundance_file}"
 mori_step:
