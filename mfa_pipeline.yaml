@@ -11,19 +11,21 @@ genome_index_prefix: '{genome_index_dir}/index'
 genome_circular: True
 protocol: sort-seq
 velocity_oscillation_model: vt
-velogp_origins: oriC
-velogp_vx_types: rRNA
-velogp_vx_names: terA,terB,terC,terD,terE,terF,terG,terH,terI,terJ
+velogp_origins: origin_of_replication
+velogp_vx_types: ''
+velogp_vx_names: ''
 velogp_vx_delayscale: 0.01
+velogp_vt_cov: m1
 velogp_vt_timescale: 0.2
 velogp_vt_magnitude: 0.25
-velogp_abundance_file: '{out_dir}/{sample}.velogp.abd.gz'
-velogp_abundance_plot: '{out_dir}/{sample}.velogp.abd.pdf'
-velogp_vt_file: '{out_dir}/{sample}.velogp.vt.gz'
-velogp_vt_plot: '{out_dir}/{sample}.velogp.vt.pdf'
-velogp_vx_file: '{out_dir}/{sample}.velogp.vx.gz'
-velogp_model_file: '{out_dir}/{sample}.velogp.model.pkl'
-velogp_objects_file: '{out_dir}/{sample}.velogp.objs.pkl'
+velogp_suffix: ''
+velogp_abundance_file: '{out_dir}/{sample}.velogp{velogp_suffix}.abd.gz'
+velogp_abundance_plot: '{out_dir}/{sample}.velogp{velogp_suffix}.abd.pdf'
+velogp_vt_file: '{out_dir}/{sample}.velogp{velogp_suffix}.vt.gz'
+velogp_vt_plot: '{out_dir}/{sample}.velogp{velogp_suffix}.vt.pdf'
+velogp_vx_file: '{out_dir}/{sample}.velogp{velogp_suffix}.vx.gz'
+velogp_model_file: '' #'{out_dir}/{sample}.velogp{velogp_suffix}.model.pkl'
+velogp_objects_file: '' #'{out_dir}/{sample}.velogp{velogp_suffix}.objs.pkl'
 velogp_abd_columns: 'seq,midpoint,coverage_ratio,coverage_ratio_stderr,ratio_mappable'
 velogp_seed: 42
 velogp_rounds: 1000
@@ -219,6 +221,7 @@ velogp_step:
     - velogp_objects_file
   override:
     step_cores: 4
+    log_label: '{velogp_suffix}'
   script: |
     PYTHONPATH="{mfa_pipeline_dir}/steps/velogp" python -m velogp \
       --cores "{step_cores}" \
@@ -228,6 +231,7 @@ velogp_step:
       --columns "{velogp_abd_columns}" \
       --vx-feature-types "{velogp_vx_types}" \
       --vx-feature-names "{velogp_vx_names}" \
+      --vt-covariance "{velogp_vt_cov}" \
       --vt-timescale "{velogp_vt_timescale}" \
       --vt-magnitude "{velogp_vt_magnitude}" \
       --out-abundance "{velogp_abundance_file}" \
