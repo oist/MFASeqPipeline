@@ -28,7 +28,8 @@ velogp_model_file: '' #'{out_dir}/{sample}.velogp{velogp_suffix}.model.pkl'
 velogp_objects_file: '' #'{out_dir}/{sample}.velogp{velogp_suffix}.objs.pkl'
 velogp_abd_columns: 'seq,midpoint,coverage_ratio,coverage_ratio_stderr,ratio_mappable'
 velogp_seed: 42
-velogp_rounds: 1000
+velogp_halve: 20
+velogp_perturbation_min: 0.01
 velogp_extra_args: ''
 mori_gamma: 8
 mori_ignore: ''
@@ -244,7 +245,8 @@ velogp_step:
       --origins "{origins}" \
       --growthrate "{growthrate_perhour}" \
       --seed "{velogp_seed}" \
-      --rounds "{velogp_rounds}" \
+      --perturbation-min "{velogp_perturbation_min}" \
+      --halve "{velogp_halve}" \
       {velogp_extra_args} \
       "{abundance_file}"
 mori_step:
