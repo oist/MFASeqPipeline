@@ -1,0 +1,36 @@
+genecounts_file: '{out_dir}/{sample}.genecounts.tab'
+genecounts_step:
+  input:
+    - bam_file
+    - stats_file
+    - genome_file
+    - gff_file
+  output:
+    - genecounts_file
+  script: |
+    # -p: input is paired end
+    # --countReadPairs: count fragments instead of reads
+    # -s <s>: stranded, s=1 reads map on coding strand, s=2 map on anti-strand
+    # -Q <th>: mapping quality threshold
+    # -B: require both mates to be mapped
+    # -C: do NOT count chimeric fragments
+    # -P: only count fragments with min <= length <= max
+    # -d <l>: minimal fragment length (only applied if -P is set)
+    # -D <l>: maximal fragment length (only applied if -P is set)
+    # -O: count a fragment for all features it overlaps
+    # -F <fmt>: format of annotation file
+    # -t <string>: feature type(s) to consider (comma-separated)
+    # -g <string>: meta-feature identifier. features are grouped by this
+    # -a <file>: annotation file
+    # -o <file>: output file
+    # --tmpDir <dir>: directory for temp files
+    featureCounts -T {step_cores} \
+      -p --countReadPairs -s 2 -Q 10 -B -C -P \
+      -d "$[$(grep insert_size "{stats_file}" | cut -f 2) / 5]" \
+      -D "$[$(grep insert_size "{stats_file}" | cut -f 2) * 5]" \
+      -O \
+      -F GTF -t gene -g ID -f --extraAttributes gene,gene_synonym,Dbxref,gene_biotype \
+      -a "{gff_file}" \
+      --tmpDir "{tmp_dir}" \
+      -o "{genecounts_file}" \
+      "{bam_file}"
