@@ -119,14 +119,25 @@ map_step:
       cat="cat"
     fi
     
+    r1_pipe="{tmp_dir}/{sample}.r1.pipe"
+    r2_pipe="{tmp_dir}/{sample}.r2.pipe"
+    mkfifo "$r1_pipe"
+    mkfifo "$r2_pipe"
+    $cat "{read1_file}" > "$r1_pipe" &
+    r1_pid=$!
+    $cat "{read2_file}" > "$r2_pipe" &
+    r2_pid=$!
+       
     rm -f "{bam_file}.in-progress"
-    bwa mem -t {step_cores} -v 1 "{genome_index_prefix}" \
-      <(exec $cat "{read1_file}") \
-      <(exec $cat "{read2_file}") \
+    bwa mem -t {step_cores} -v 1 "{genome_index_prefix}" "$r1_pipe" "$r2_pipe" \
       | samtools sort --threads {step_cores} -m $[{memory_sort_gb}*1024/{step_cores}]M \
-          -T {tmp_dir}/{sample}.samtools-sort. \
+          -T "{tmp_dir}/{sample}.samtools-sort." \
           -O BAM -l 7 -o "{bam_file}.in-progress" \
           -
+    
+    wait $r1_pid
+    wait $r2_pid
+    
     mv "{bam_file}.in-progress" "{bam_file}"
     samtools index -@ {step_cores} "{bam_file}" "{bam_index_file}"
 fastqc_step:

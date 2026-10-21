@@ -13,7 +13,7 @@ map_step:
   script: |
     set -e
     set -o pipefail
-
+    
     if [[ "{read_file}" == *.gz ]]; then
       cat="zcat"
     elif [[ "{read_file}" == *.bz2 ]]; then
@@ -22,13 +22,21 @@ map_step:
       cat="cat"
     fi
     
+    r_pipe="{tmp_dir}/{sample}.r.pipe"
+    mkfifo "$r_pipe"
+    $cat "{read_file}" > "$r_pipe" &
+    r_pid=$!
+       
     rm -f "{bam_file}.in-progress"
-    bwa mem -t {step_cores} -v 1 "{genome_index_prefix}" \
-      <(exec $cat "{read_file}") \
+    bwa mem -t {step_cores} -v 1 "{genome_index_prefix}" "$r_pipe" \
       | samtools sort --threads {step_cores} -m $[{memory_sort_gb}*1024/{step_cores}]M \
-          -T {tmp_dir}/{sample}.samtools-sort. \
+          -T "{tmp_dir}/{sample}.samtools-sort." \
           -O BAM -l 7 -o "{bam_file}.in-progress" \
           -
+    
+    wait $r1_pid
+    wait $r2_pid
+    
     mv "{bam_file}.in-progress" "{bam_file}"
     samtools index -@ {step_cores} "{bam_file}" "{bam_index_file}"
 mappability_step:
