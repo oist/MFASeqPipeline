@@ -33,6 +33,7 @@ velogp_seed: 42
 velogp_perturbation_rejects: 5
 velogp_perturbation_reduction: 0.8408964
 velogp_perturbation_min: 0.01
+velogp_errormodel: false
 velogp_extra_args: ''
 mori_gamma: 8
 mori_ignore: ''
@@ -238,6 +239,12 @@ velogp_step:
     step_cores: 4
     log_label: '{velogp_suffix}'
   script: |
+    shopt -s nocasematch
+    if [[ "{velogp_errormodel}" == "true" || "{velogp_errormodel}" -gt 0 ]]; then
+      VELOGP_ERRORMODEL="--error-model"
+    else
+      VELOGP_ERRORMODEL=""
+    fi
     PYTHONPATH="{mfa_pipeline_dir}/steps/velogp" python -m velogp \
       --cores "{step_cores}" \
       --genome "{genome_file}" \
@@ -262,6 +269,7 @@ velogp_step:
       --perturbation-rejects "{velogp_perturbation_rejects}" \
       --perturbation-reduction "{velogp_perturbation_reduction}" \
       --perturbation-min "{velogp_perturbation_min}" \
+      ${{VELOGP_ERRORMODEL}} \
       {velogp_extra_args} \
       "{abundance_file}"
 mori_step:
