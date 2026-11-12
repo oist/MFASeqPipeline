@@ -1,6 +1,7 @@
 refseq_dir: '{project_dir}/refseq'
 genome_file: '{refseq_dir}/{refseq}.fna'
 gff_file: '{refseq_dir}/{refseq}.gff'
+gbff_file: '{refseq_dir}/{refseq}.gbff'
 genome_download_step:
     output:
         - genome_file
@@ -21,6 +22,23 @@ genome_download_step:
         gff="$(find ncbi_dataset/ -name '*.gff')"
         cp "$fna" "{genome_file}"
         cp "$gff" "{gff_file}"
+genome_gbff_download_step:
+    output:
+        - gbff_file
+    override:
+        target_label: '{refseq}'
+        step_cores: 1
+        step_memory_gb: 1
+    script: |
+        set -e
+        
+        cd "{tmp_dir}"
+        curl -X GET "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/{refseq}/download?include_annotation_type=GENOME_GBFF&hydrated=FULLY_HYDRATED" \
+             -H 'accept: application/zip' \
+             -o ncbi_dataset.zip
+        unzip ncbi_dataset.zip
+        gbff="$(find ncbi_dataset/ -name '*.gbff')"
+        cp "$gbff" "{gbff_file}"
 genome_download_faonly_step:
     output:
         - genome_file
