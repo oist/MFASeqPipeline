@@ -26,8 +26,8 @@ sys.stdout = io.TextIOWrapper(open(sys.stdout.fileno(), 'wb', 0), write_through=
 
 # Argument handling
 parser = argparse.ArgumentParser(
-    prog="MFASeqPipeline", 
-    description="Process MFA-Seq data")
+    prog="arubaito",
+    description="Run workflows defined in YAML configuration files")
 
 parser.add_argument("--list-targets", default=False, action='store_true',
                     help="list all defined targets")

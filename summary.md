@@ -1,6 +1,6 @@
 # Workflow engine summary
 
-`mfa_pipeline.py` is a small, self-contained workflow engine (~600 lines, only
+`arubaito.py` is a small, self-contained workflow engine (~600 lines, only
 dependency PyYAML). A run is driven by one YAML *configuration* which defines
 **variables**, **steps** and **targets**, and may pull in other YAML files via
 **`use`**. Each step's shell script is launched through a configurable
@@ -10,14 +10,14 @@ storage. The engine has no knowledge of MFA-seq; all domain logic lives in the
 YAML files and the helper scripts under `steps/`.
 
 ```
-mfa_pipeline.py [options] CONFIG [TARGET ...] [KEY=VALUE ...]
+arubaito.py [options] CONFIG [TARGET ...] [KEY=VALUE ...]
 ```
 
 ## 1. Configuration files and `use`
 
 * `CONFIG` is a name (`example_dataset`) or file (`example_dataset.yaml`). Files
   are searched in `./` (the current directory) first, then in the directory
-  containing `mfa_pipeline.py`. The same search applies to every `use` entry.
+  containing `arubaito.py`. The same search applies to every `use` entry.
 * `use: name` or `use: [name1, name2]` loads other configs recursively and merges
   them with a **shallow, top-level** dict update:
   * The including file always wins over what it uses.
@@ -264,5 +264,5 @@ Helper programs live in `steps/` (`abundance.py`, `mappability.py`,
   contains `{windowsize}`).
 * With `execute_copy_outputs`, two steps in one job producing the same output
   variable raise an error.
-* The "expands indefinitely" error message at `mfa_pipeline.py:123` is missing an
+* The "expands indefinitely" error message at `arubaito.py:123` is missing an
   `f` prefix, so it prints a literal `{key}`.
