@@ -26,8 +26,7 @@ velogp_abundance_plot: '{out_dir}/{sample}.velogp{velogp_suffix}.abd.pdf'
 velogp_vt_file: '{out_dir}/{sample}.velogp{velogp_suffix}.vt.gz'
 velogp_vt_plot: '{out_dir}/{sample}.velogp{velogp_suffix}.vt.pdf'
 velogp_vx_file: '{out_dir}/{sample}.velogp{velogp_suffix}.vx.gz'
-velogp_model_file: '' #'{out_dir}/{sample}.velogp{velogp_suffix}.model.pkl'
-velogp_objects_file: '' #'{out_dir}/{sample}.velogp{velogp_suffix}.objs.pkl'
+velogp_objects_file: '{out_dir}/{sample}.velogp{velogp_suffix}.pkl'
 velogp_abd_columns: 'seq,midpoint,coverage_ratio,coverage_ratio_stderr,ratio_mappable'
 velogp_seed: 42
 velogp_perturbation_rejects: 5
@@ -233,7 +232,6 @@ velogp_step:
     - velogp_vt_file
     - velogp_vt_plot
     - velogp_vx_file
-    - velogp_model_file
     - velogp_objects_file
   override:
     step_cores: 4
@@ -259,7 +257,6 @@ velogp_step:
       --out-abundance "{velogp_abundance_file}" \
       --out-trajectories "{velogp_vt_file}" \
       --out-vx-feature-delays "{velogp_vx_file}" \
-      --out-model "{velogp_model_file}" \
       --out-objects "{velogp_objects_file}" \
       --plot-vt "{velogp_vt_plot}" \
       --plot-abundance "{velogp_abundance_plot}" \
