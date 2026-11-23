@@ -34,6 +34,20 @@ velogp_perturbation_reduction: 0.8408964
 velogp_perturbation_min: 0.01
 velogp_errormodel: false
 velogp_extra_args: ''
+velomix_stall_sites: ''
+velomix_suffix: ''
+velomix_probabilities_file: '{out_dir}/{sample}.velomix{velomix_suffix}.p.gz'
+velomix_abundance_file: '{out_dir}/{sample}.velomix{velomix_suffix}.abd.gz'
+velomix_abundance_plot: '{out_dir}/{sample}.velomix{velomix_suffix}.abd.pdf'
+velomix_vt_file: '{out_dir}/{sample}.velomix{velomix_suffix}.vt.gz'
+velomix_vt_plot: '{out_dir}/{sample}.velomix{velomix_suffix}.vt.pdf'
+velomix_vx_file: '{out_dir}/{sample}.velomix{velomix_suffix}.vx.gz'
+velomix_objects_file: '{out_dir}/{sample}.velomix{velomix_suffix}.pkl'
+velomix_seed: 42
+velomix_perturbation_rejects: 5
+velomix_perturbation_reduction: 0.8408964
+velomix_perturbation_min: 0.01
+velomix_extra_args: ''
 mori_gamma: 8
 mori_ignore: ''
 mori_seed: 42
@@ -269,6 +283,39 @@ velogp_step:
       ${{VELOGP_ERRORMODEL}} \
       {velogp_extra_args} \
       "{abundance_file}"
+velomix_step:
+  input:
+    - velogp_objects_file
+  output:
+    - velomix_abundance_file
+    - velomix_abundance_plot
+    - velomix_probabilities_file
+    - velomix_vt_file
+    - velomix_vt_plot
+    - velomix_vx_file
+    - velomix_objects_file
+  override:
+    step_cores: 4
+    log_label: '{velomix_suffix}'
+  script: |
+    shopt -s nocasematch
+    PYTHONPATH="{mfa_pipeline_dir}/steps/velogp" python -m velogp.velomix \
+      --stall-sites "{velomix_stall_sites}" \
+      --cores "{step_cores}" \
+      --out-probabilities "{velomix_probabilities_file}" \
+      --out-abundance "{velomix_abundance_file}" \
+      --out-trajectories "{velomix_vt_file}" \
+      --out-vx-feature-delays "{velomix_vx_file}" \
+      --out-objects "{velomix_objects_file}" \
+      --plot-vt "{velomix_vt_plot}" \
+      --plot-abundance "{velomix_abundance_plot}" \
+      --seed "{velomix_seed}" \
+      --perturbation-rejects "{velomix_perturbation_rejects}" \
+      --perturbation-reduction "{velomix_perturbation_reduction}" \
+      --perturbation-min "{velomix_perturbation_min}" \
+      ${{VELOGP_ERRORMODEL}} \
+      {velomix_extra_args} \
+      "{velogp_objects_file}"      
 mori_step:
   input:
     - abundance_file
