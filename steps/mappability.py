@@ -51,7 +51,7 @@ if REGIONS != "":
     for line in bed_file:
         fields = [ f.strip() for f in line.split("\t") ]
         if len(fields) < 4:
-            raise ArgumentError(f"Regions BED file must have at least 4 columns, found only {len(fields)} columns in line: {line}")
+            raise RuntimeError(f"Regions BED file must have at least 4 columns, found only {len(fields)} columns in line: {line}")
         chr, start, end, name = fields[0], int(fields[1]), int(fields[2]), fields[3]
         # Resolve feature names
         if name in EXCLUDE:
