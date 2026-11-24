@@ -22,8 +22,8 @@ fastq_step:
         done
         
         for acc in $(echo "{accession}" | tr "," " "); do
-            if [[ -e "$acc_1.fastq" ]] || [[ -e "$acc_2.fastq" ]]; then
-                echo "WARNING: Ignoring paired-end reads" >&2
+            if [[ -e "${{acc}}_1.fastq" ]] || [[ -e "${{acc}}_2.fastq" ]]; then
+                echo "WARNING: Ignoring paired-end reads for accession $acc" >&2
             fi
         done
         

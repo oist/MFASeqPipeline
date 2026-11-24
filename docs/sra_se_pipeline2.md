@@ -87,6 +87,5 @@ the output name ends in `.gz`. Uses one core.
 
 `tmp_dir` must have room for the uncompressed reads of all runs in the sample.
 
-Paired reads in the runs are not included in the output. The script is meant to
-warn about them, but the check is currently broken: it tests `$acc_1.fastq`,
-which bash reads as the variable `acc_1`. So no warning is printed.
+Paired reads in the runs are not included in the output; a warning names each
+accession that contained them.
