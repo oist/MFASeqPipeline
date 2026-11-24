@@ -21,7 +21,7 @@ def open_file(filename, mode):
 # Command-line arguments
 GENOME = sys.argv[1]
 GENOME_INDEX = sys.argv[2]
-CIRCULAR = bool(sys.argv[3])
+CIRCULAR = sys.argv[3].lower() in ["1", "true", "yes"]
 FRAGMENTLENGTH = int(sys.argv[4])
 READLENGTH = int(sys.argv[5])
 IS_PAIRED = sys.argv[6] in ["1", "true"]
