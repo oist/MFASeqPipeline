@@ -264,5 +264,3 @@ Helper programs live in `steps/` (`abundance.py`, `mappability.py`,
   contains `{windowsize}`).
 * With `execute_copy_outputs`, two steps in one job producing the same output
   variable raise an error.
-* The "expands indefinitely" error message at `arubaito.py:123` is missing an
-  `f` prefix, so it prints a literal `{key}`.

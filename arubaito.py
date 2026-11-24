@@ -120,7 +120,7 @@ def expand(value, cfg=CFG):
     stack = [value]
     while value != vp:
         if i > 100:
-          raise ConfigurationError("configuration key {key} expands indefinitely")
+          raise ConfigurationError(f"expansion does not terminate (circular variable references?) for:\n{stack[0]}")
         value = vp
         # Same quoting of {{ and }} as above
         vq = value.replace("{{", "{{{{").replace("}}", "}}}}")
