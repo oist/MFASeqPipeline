@@ -21,9 +21,6 @@ class ConfigurationError(Exception):
 class ExecutionError(Exception):
     pass
 
-# Make output unbuffered
-sys.stdout = io.TextIOWrapper(open(sys.stdout.fileno(), 'wb', 0), write_through=True)
-
 # Argument handling
 parser = argparse.ArgumentParser(
     prog="arubaito",
@@ -59,6 +56,7 @@ CFG_SEARCHPATH = [ "./", os.path.dirname(os.path.realpath(__file__)) ]
 
 # Set later
 CFG = None
+ARGS = None
 CFG_CMDLINE = None
 TARGETS = None
 
@@ -518,95 +516,104 @@ def execute_job(job):
         cleanup_tempfiles()
         atexit.unregister(cleanup_tempfiles)
 
-error_code = 0
-try:
-    # Parse arguments
-    # NOTE: The parser cannot actually distinguish between target and
-    # configuration overrides, and thus puts all extra arguments in targets.
-    # We thus must split the targets manually into actual targets and seettings.
-    ARGS = parser.parse_args()
+def main():
+    global ARGS, CFG, CFG_CMDLINE, TARGETS
 
-    if ARGS.quiet is None:
-        ARGS.quiet = (ARGS.jobs > 1)
+    # Make output unbuffered
+    sys.stdout = io.TextIOWrapper(open(sys.stdout.fileno(), 'wb', 0), write_through=True)
+
+    error_code = 0
+    try:
+        # Parse arguments
+        # NOTE: The parser cannot actually distinguish between target and
+        # configuration overrides, and thus puts all extra arguments in targets.
+        # We thus must split the targets manually into actual targets and seettings.
+        ARGS = parser.parse_args()
+
+        if ARGS.quiet is None:
+            ARGS.quiet = (ARGS.jobs > 1)
         
-    if ARGS.catch is None:
-        ARGS.catch = (len(ARGS.targets) > 0)
+        if ARGS.catch is None:
+            ARGS.catch = (len(ARGS.targets) > 0)
 
-    # Load config
-    CFG = load_config(ARGS.config)
+        # Load config
+        CFG = load_config(ARGS.config)
     
-    # Command-line cfg overrides
-    CFG_CMDLINE = {}
+        # Command-line cfg overrides
+        CFG_CMDLINE = {}
     
-    # Steps is special-cased to support comma-separated lists
-    if ARGS.steps is not None:
-        CFG_CMDLINE["steps"] = ARGS.steps
+        # Steps is special-cased to support comma-separated lists
+        if ARGS.steps is not None:
+            CFG_CMDLINE["steps"] = ARGS.steps
 
-    # Split ARGS.targets into actual targets and settings, apply setting to config
-    targets_or_settings = ARGS.targets
-    in_targets = True
-    ARGS.targets = []
-    ARGS.settings = []
-    for i in range(0, len(targets_or_settings)):
-        arg = targets_or_settings[i]
-        in_targets = in_targets and "=" not in arg
-        if in_targets:
-            if arg == "all":
-                if not CFG.get("targets"):
-                    raise ArgumentError("target 'all' requested, but the configuration defines no targets")
-                ARGS.targets.extend(CFG["targets"].keys())
+        # Split ARGS.targets into actual targets and settings, apply setting to config
+        targets_or_settings = ARGS.targets
+        in_targets = True
+        ARGS.targets = []
+        ARGS.settings = []
+        for i in range(0, len(targets_or_settings)):
+            arg = targets_or_settings[i]
+            in_targets = in_targets and "=" not in arg
+            if in_targets:
+                if arg == "all":
+                    if not CFG.get("targets"):
+                        raise ArgumentError("target 'all' requested, but the configuration defines no targets")
+                    ARGS.targets.extend(CFG["targets"].keys())
+                else:
+                    ARGS.targets.append(arg)
             else:
-                ARGS.targets.append(arg)
-        else:
-            key_value = arg.split("=", maxsplit=1)
-            if len(key_value) < 2:
-                raise ArgumentError(f"invalid argument {arg}, must be of the form KEY=VALUE")
-            try:
-                key, value = key_value[0], yaml.safe_load(io.StringIO(key_value[1]))
-            except yaml.parser.ParserError as e:
-                raise ArgumentError(f"invalid YAML syntax in: {key_value[0]}={key_value[1]}\n{e}") from e
-            CFG_CMDLINE[key] = value
+                key_value = arg.split("=", maxsplit=1)
+                if len(key_value) < 2:
+                    raise ArgumentError(f"invalid argument {arg}, must be of the form KEY=VALUE")
+                try:
+                    key, value = key_value[0], yaml.safe_load(io.StringIO(key_value[1]))
+                except yaml.parser.ParserError as e:
+                    raise ArgumentError(f"invalid YAML syntax in: {key_value[0]}={key_value[1]}\n{e}") from e
+                CFG_CMDLINE[key] = value
 
-    # Build list of targets
-    TARGETS = {}
-    if "targets" in CFG:
-        add_targets(CFG["targets"])
+        # Build list of targets
+        TARGETS = {}
+        if "targets" in CFG:
+            add_targets(CFG["targets"])
     
-    # List targets if requested and exit
-    if ARGS.list_targets:
-        for tname, tgts in TARGETS.items():
-            print(f'=== TARGET: {tname}')
-            for tgt in tgts:
-                tjob, tpath = tgt["job"], tgt["path"]
-                first = True
-                for n, v in tjob.items():
-                    print(f'  {"-" if first else " "} {n}: {v}')
-                    first = False
-        sys.exit(0)
+        # List targets if requested and exit
+        if ARGS.list_targets:
+            for tname, tgts in TARGETS.items():
+                print(f'=== TARGET: {tname}')
+                for tgt in tgts:
+                    tjob, tpath = tgt["job"], tgt["path"]
+                    first = True
+                    for n, v in tjob.items():
+                        print(f'  {"-" if first else " "} {n}: {v}')
+                        first = False
+            sys.exit(0)
 
-    # Execute all jobs in target
-    if len(ARGS.targets) > 0:
-        POOL = concurrent.futures.ThreadPoolExecutor(max_workers=ARGS.jobs)
-        for target in ARGS.targets:
-            if target not in TARGETS:
-                raise ArgumentError(f"invalid target {target}")
-            if not ARGS.quiet:
-                print(f'=== TARGET: {target}')
-            for r in POOL.map(execute_job, [ t['job'] for t in TARGETS[target] ]):
-                if isinstance(r, KeyError):
-                    print(f'JOB FAILED: Variable {r} is not defined')
-                    error_code = 1
-                elif isinstance(r, Exception):
-                    print(f'JOB FAILED: {r}')
-                    print(type(r))
-                    error_code = 1
-            if not ARGS.quiet:
-                print(f'=== COMPLETED TARGET: {target}')
-    else:
-        ARGS.catch = False
-        execute_job({})
-except Exception as e:
-    print(f"ERROR: {e}", file=sys.stderr)
-    error_code = 1
+        # Execute all jobs in target
+        if len(ARGS.targets) > 0:
+            POOL = concurrent.futures.ThreadPoolExecutor(max_workers=ARGS.jobs)
+            for target in ARGS.targets:
+                if target not in TARGETS:
+                    raise ArgumentError(f"invalid target {target}")
+                if not ARGS.quiet:
+                    print(f'=== TARGET: {target}')
+                for r in POOL.map(execute_job, [ t['job'] for t in TARGETS[target] ]):
+                    if isinstance(r, KeyError):
+                        print(f'JOB FAILED: Variable {r} is not defined')
+                        error_code = 1
+                    elif isinstance(r, Exception):
+                        print(f'JOB FAILED: {r}')
+                        print(type(r))
+                        error_code = 1
+                if not ARGS.quiet:
+                    print(f'=== COMPLETED TARGET: {target}')
+        else:
+            ARGS.catch = False
+            execute_job({})
+    except Exception as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        error_code = 1
 
-sys.exit(error_code)
+    sys.exit(error_code)
+
+if __name__ == "__main__":
+    main()
