@@ -563,7 +563,8 @@ try:
 
     # Build list of targets
     TARGETS = {}
-    add_targets(CFG["targets"])
+    if "targets" in CFG:
+        add_targets(CFG["targets"])
     
     # List targets if requested and exit
     if ARGS.list_targets:
