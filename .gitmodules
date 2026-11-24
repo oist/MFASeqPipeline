@@ -1,3 +1,6 @@
+[submodule "steps/mori"]
+	path = steps/mori
+	url = git@github.com:oist/MORI.git
 [submodule "steps/velogp"]
 	path = steps/velogp
 	url = git@github.com:oist/VeloGP.git

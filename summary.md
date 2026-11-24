@@ -250,7 +250,7 @@ Everything else (`step_cores`, `step_memory_gb`, `step_time`, `target_label`,
 
 | File | Content |
 |---|---|
-| `mfa_pipeline.yaml` | main paired-end MFA-seq pipeline: variables and steps `genome_index`, `map`, `fastqc`, `mapstats`, `mappability`, `abundance`, `abundance_plot`, `velocity_oscillation`, `velogp`, `velomix` |
+| `mfa_pipeline.yaml` | main paired-end MFA-seq pipeline: variables and steps `genome_index`, `map`, `fastqc`, `mapstats`, `mappability`, `abundance`, `abundance_plot`, `velocity_oscillation`, `velogp`, `mori` |
 | `mfa_se_pipeline.yaml` | single-end variant; `use: mfa_pipeline`, replaces `map`/`mappability`, `read_file`, `paired_end: 0` |
 | `mfa_no_reference.yaml` | overlay that blanks the `reference_*` inputs |
 | `rnaseq_pipeline.yaml` | `genecounts` step (featureCounts); no `use`, relies on `mfa_pipeline` variables |
@@ -261,7 +261,8 @@ Everything else (`step_cores`, `step_memory_gb`, `step_time`, `target_label`,
 | `env.yaml` | conda environment |
 
 Helper programs live in `steps/` (`abundance.py`, `mappability.py`,
-`mapping_statistics.py`, R scripts) and the git submodule `steps/velogp`.
+`mapping_statistics.py`, R scripts) and the git submodules `steps/mori` and
+`steps/velogp`.
 
 ## 7. Known quirks
 

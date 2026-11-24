@@ -13,7 +13,7 @@ abundances in windows, usually as the ratio between a replicating
 (exponentially growing) sample and a non-replicating reference (e.g. a
 stationary-phase sample). From this abundance profile, the downstream steps
 infer replication dynamics using Gaussian-process models of fork speed
-(`velogp`, `velomix`). The older parametric fit
+(`velogp`, `velomix`) and origin firing (`mori`). The older parametric fit
 `velocity_oscillation` is still available but outdated.
 
 For samples without a reference, use the overlay `mfa_no_reference.yaml`; see
@@ -238,3 +238,21 @@ Formats are documented in
   (`.abd.gz`, `.vt.gz`, `.vx.gz`) and plots `velomix_abundance_plot`,
   `velomix_vt_plot` (`.pdf`): same meaning as for `velogp`.
 * **Output** `velomix_objects_file` (`{sample}.velomix.pkl`): pickled fitted model.
+
+### mori
+
+Infers origin locations and firing from the abundance profile with
+[MORI](../steps/mori/). Formats are documented in
+[steps/velogp/docs](../steps/velogp/docs/).
+
+* **Input** `abundance_file`.
+* **Input** the growth rate, as for `velogp` (passed to MORI in 1/s).
+* Settings: `protocol` (default `sort-seq`), `mori_gamma`, `mori_seed`,
+  `mori_ignore` (comma-separated sequences to leave out). `mori_gamma` appears in
+  all output names.
+* **Output** `mori_summary_file` (`{sample}.mori.g{mori_gamma}.summary.tab`): summary table.
+* **Output** `mori_origins_file` (`….gff.gz`): inferred origins as gzipped GFF.
+* **Output** `mori_results_file` (`….fit.gz`): fit results.
+* **Output** `mori_history_file` (`….history.gz`): fit history (MORI's iteration log).
+* **Output** `mori_output_dir` (default `''`, i.e. off): if set, a directory that
+  keeps all of MORI's raw output files.

@@ -2,8 +2,8 @@
 
 An **input** file that the user provides, by default
 `{meta_dir}/growthrates.tab` (variable `growthrates_file`). It gives the
-exponential growth rate of each sample. The `velogp` step needs it (and the
-outdated `velocity_oscillation`).
+exponential growth rate of each sample. The `velogp` and `mori` steps need it
+(and the outdated `velocity_oscillation`).
 
 Tab-separated text with no header. Each line has at least two columns:
 

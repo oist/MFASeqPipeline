@@ -6,9 +6,9 @@
 frequency analysis* (MFA-seq) data. Its first stage maps sequencing reads and
 produces a table of position-wise DNA abundances, comparing replicating
 (exponentially growing) samples with non-replicating (e.g. stationary)
-references. From these abundances, it then infers replication dynamics, in
-particular the speed of replication forks over time with
-[VeloGP](https://github.com/oist/VeloGP). The main features are
+references. From these abundances, it then infers replication dynamics: the
+speed of replication forks over time with [VeloGP](https://github.com/oist/VeloGP),
+and origin firing with [MORI](https://github.com/oist/MORI). The main features are
 
   - Non-parametric, Gaussian-process based estimation of fork velocity
   - Automatic detection and exclusion of genomic regions that cannot be mapped
@@ -25,7 +25,7 @@ the steps to run for each. See [docs/arubaito.md](docs/arubaito.md).
 
 ## Installation
 
-Clone the repository together with its submodule VeloGP:
+Clone the repository together with its submodules VeloGP and MORI:
 
 ```bash
 git clone --recurse-submodules git@github.com:oist/MFASeqPipeline.git
@@ -156,7 +156,7 @@ the `execute_cmd` and `execute_copy_outputs` lines (see
 
 | Pipeline | Purpose |
 |---|---|
-| [mfa_pipeline](docs/mfa_pipeline.md) | MFA-seq analysis of paired-end data: mapping, mappability, abundances, VeloGP and VeloMix |
+| [mfa_pipeline](docs/mfa_pipeline.md) | MFA-seq analysis of paired-end data: mapping, mappability, abundances, VeloGP, VeloMix and MORI |
 | [mfa_se_pipeline](docs/mfa_se_pipeline.md) | The same for single-end data |
 | [sra_pipeline](docs/sra_pipeline.md), [sra_se_pipeline](docs/sra_se_pipeline.md) | Download paired-end / single-end runs from SRA (via `.sra` files), for use with `mfa_pipeline` / `mfa_se_pipeline` |
 | [sra_pipeline2](docs/sra_pipeline2.md), [sra_se_pipeline2](docs/sra_se_pipeline2.md) | Download paired-end / single-end runs from SRA directly to FASTQ, several runs per sample |
@@ -171,6 +171,6 @@ reference; see [abundance](docs/mfa_pipeline.md#abundance).
 * [Abundance file](docs/abundance_format.md): output of `abundance`
 * [Mappability file](docs/mappability_format.md): output of `mappability`
 * [Mapping statistics](docs/stats_format.md): output of `mapstats`
-* [Growth rates](docs/growthrates_format.md): input for `velogp`
+* [Growth rates](docs/growthrates_format.md): input for `velogp` and `mori`
 * [Velocity oscillation fit](docs/velocity_oscillation_format.md): output of the
   outdated `velocity_oscillation` step

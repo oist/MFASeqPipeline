@@ -2,7 +2,7 @@
 
 Produced by the `abundance` step of [mfa_pipeline](mfa_pipeline.md) and
 [mfa_se_pipeline](mfa_se_pipeline.md) (`steps/abundance.py`). It is the input
-for `velogp`, `abundance_plot` and the outdated `velocity_oscillation`.
+for `velogp`, `mori`, `abundance_plot` and the outdated `velocity_oscillation`.
 
 * Tab-separated text, gzip-compressed if the file name ends in `.gz` (the
   default name is `{out_dir}/{sample}.abd.w{windowsize}bp.gz`).
