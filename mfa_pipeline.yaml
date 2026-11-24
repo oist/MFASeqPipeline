@@ -313,7 +313,6 @@ velomix_step:
       --perturbation-rejects "{velomix_perturbation_rejects}" \
       --perturbation-reduction "{velomix_perturbation_reduction}" \
       --perturbation-min "{velomix_perturbation_min}" \
-      ${{VELOGP_ERRORMODEL}} \
       {velomix_extra_args} \
       "{velogp_objects_file}"      
 mori_step:
