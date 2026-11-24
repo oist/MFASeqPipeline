@@ -79,7 +79,7 @@ reference_mappability_file: '{out_dir}/{reference}.mappability.bed'
 abundance_file: '{out_dir}/{sample}.abd.w{windowsize}bp.gz'
 abundance_plot: '{out_dir}/{sample}.abd.w{windowsize}bp.pdf'
 abundance_plot_cmd: |
-  plot "< zcat {abundance_file}" using "midpoint":((column("ratio_mappable") >  0) ? column("covarage_ratio") : NaN) title "{sample} (well mappable windows)", \
+  plot "< zcat {abundance_file}" using "midpoint":((column("ratio_mappable") >  0) ? column("coverage_ratio") : NaN) title "{sample} (well mappable windows)", \
        "< zcat {abundance_file}" using "midpoint":((column("ratio_mappable") == 0) ? column("coverage_ratio") : NaN) title "{sample} (badly mappable windows)";
 velocity_oscillation_file: '{out_dir}/{sample}.osc.{velocity_oscillation_model}.tab'
 mori_summary_file: '{out_dir}/{sample}.mori.g{mori_gamma}.summary.tab'

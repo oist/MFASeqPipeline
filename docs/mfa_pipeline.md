@@ -176,9 +176,6 @@ windows separately. The plot is set by `abundance_plot_cmd`.
 * **Input** `abundance_file`.
 * **Output** `abundance_plot` (`{sample}.abd.w{windowsize}bp.pdf`): PDF.
 
-Note: the default `abundance_plot_cmd` misspells the column name
-`coverage_ratio` as `covarage_ratio` in its first plot clause.
-
 ### velocity_oscillation
 
 **Outdated**: use [velogp](#velogp) instead.
