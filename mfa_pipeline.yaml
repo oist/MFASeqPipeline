@@ -11,7 +11,6 @@ origin_file: '{base_dir}/origins.bed'
 genome_index_dir: '{genome_file}.bwaidx'
 genome_index_prefix: '{genome_index_dir}/index'
 genome_circular: True
-protocol: sort-seq
 velocity_oscillation_model: vt
 origins: origin_of_replication
 velogp_vx_types: ''
@@ -48,9 +47,6 @@ velomix_perturbation_rejects: 5
 velomix_perturbation_reduction: 0.8408964
 velomix_perturbation_min: 0.01
 velomix_extra_args: ''
-mori_gamma: 8
-mori_ignore: ''
-mori_seed: 42
 windowsize: 10k
 mapping_quality: 20
 cores: 32
@@ -82,11 +78,6 @@ abundance_plot_cmd: |
   plot "< zcat {abundance_file}" using "midpoint":((column("ratio_mappable") >  0) ? column("coverage_ratio") : NaN) title "{sample} (well mappable windows)", \
        "< zcat {abundance_file}" using "midpoint":((column("ratio_mappable") == 0) ? column("coverage_ratio") : NaN) title "{sample} (badly mappable windows)";
 velocity_oscillation_file: '{out_dir}/{sample}.osc.{velocity_oscillation_model}.tab'
-mori_summary_file: '{out_dir}/{sample}.mori.g{mori_gamma}.summary.tab'
-mori_origins_file: '{out_dir}/{sample}.mori.g{mori_gamma}.gff.gz'
-mori_results_file: '{out_dir}/{sample}.mori.g{mori_gamma}.fit.gz'
-mori_history_file: '{out_dir}/{sample}.mori.g{mori_gamma}.history.gz'
-mori_output_dir: ''
 target_label: '{sample}'
 shell: /bin/bash
 execute_cmd: srun -p compute --job-name='{target_label}.{step}{log_label}' --mem={step_memory_gb}G --time={step_time} -c {step_cores} {script_file}
@@ -315,51 +306,3 @@ velomix_step:
       --perturbation-min "{velomix_perturbation_min}" \
       {velomix_extra_args} \
       "{velogp_objects_file}"      
-mori_step:
-  input:
-    - abundance_file
-  output:
-    - mori_summary_file
-    - mori_origins_file
-    - mori_results_file
-    - mori_history_file
-    - mori_output_dir
-  override:
-    step_cores: 4
-    step_time: 4-0
-    log_label: '.g{mori_gamma}'
-  script: |
-    set -e
-    set -o pipefail
-    if [[ "{mori_output_dir}" != "" ]]; then
-      mkdir -p '{mori_output_dir}'
-      MORI_PREFIX="{mori_output_dir}/"
-    else
-      MORI_PREFIX="{tmp_dir}/mori"
-    fi
-    IFS=, read -ra ignore <<< "{mori_ignore}"
-    {mfa_pipeline_dir}/steps/mori/mori.py \
-      --protocol "{protocol}" \
-      --abundances "{abundance_file}" \
-      --growthrate $(awk 'BEGIN {{print {growthrate_perhour}/3600}}') \
-      --gamma "{mori_gamma}" \
-      --random-seed "{mori_seed}" \
-      $(IFS=' ' ; echo "${{ignore[*]/#/--remove-sequence }}") \
-      --output-prefix "${{MORI_PREFIX}}" \
-      --log iteration \
-      --checkpoint -1 \
-      --compile \
-      --device cpu \
-      --threads {step_cores}
-    if [[ "{mori_summary_file}" != "" ]]; then
-      cp "${{MORI_PREFIX}}_summary.tab" "{mori_summary_file}"
-    fi
-    if [[ "{mori_origins_file}" != "" ]]; then
-      cp "${{MORI_PREFIX}}_origins.gff.gz" "{mori_origins_file}"
-    fi
-    if [[ "{mori_results_file}" != "" ]]; then
-      cp "${{MORI_PREFIX}}_results.gz" "{mori_results_file}"
-    fi
-    if [[ "{mori_history_file}" != "" ]]; then
-      cp "${{MORI_PREFIX}}_history.gz" "{mori_history_file}"
-    fi
