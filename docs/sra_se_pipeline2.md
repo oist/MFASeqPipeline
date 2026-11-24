@@ -67,7 +67,7 @@ targets:
 ```
 
 ```bash
-./arubaito.py public genome reference growing
+arubaito public genome reference growing
 ```
 
 For each sample, `fastq` creates `/data/public/fastq/<sample>.fastq.gz`; for `exp`

@@ -10,14 +10,17 @@ storage. The engine has no knowledge of MFA-seq; all domain logic lives in the
 YAML files and the helper scripts under `steps/`.
 
 ```
-arubaito.py [options] CONFIG [TARGET ...] [KEY=VALUE ...]
+arubaito [options] CONFIG [TARGET ...] [KEY=VALUE ...]      # installed with pip
+./arubaito.py [options] CONFIG [TARGET ...] [KEY=VALUE ...] # from a checkout
 ```
 
 ## 1. Configuration files and `use`
 
 * `CONFIG` is a name (`example_dataset`) or file (`example_dataset.yaml`). Files
   are searched in `./` (the current directory) first, then in the directory
-  containing `arubaito.py`. The same search applies to every `use` entry.
+  containing `arubaito.py` (for a pip install, the installed package
+  `mfaseq_pipeline`, which also contains all pipelines; see section 8). The same
+  search applies to every `use` entry.
 * `use: name` or `use: [name1, name2]` loads other configs recursively and merges
   them with a **shallow, top-level** dict update:
   * The including file always wins over what it uses.
@@ -27,7 +30,7 @@ arubaito.py [options] CONFIG [TARGET ...] [KEY=VALUE ...]
     `map_step` replaces the whole step, redefining `targets` replaces all targets.
 * For every loaded file `<name>.yaml` the engine sets `<name>_dir` to the search
   directory where it was found (e.g. `mfa_pipeline_dir`). Pipelines use this to
-  call their helper scripts: `{mfa_pipeline_dir}/steps/abundance.py`. Note that
+  call their helper scripts: `python3 {mfa_pipeline_dir}/steps/abundance.py`. Note that
   for files found in the current directory this is the relative path `./`.
 
 The engine does not distinguish kinds of YAML files: any file may define
@@ -97,7 +100,7 @@ abundance_step:
     step_cores: 1
     log_label: '.w{windowsize}bp'
   script: |
-    {mfa_pipeline_dir}/steps/abundance.py "{bam_file}" ... "{abundance_file}"
+    python3 {mfa_pipeline_dir}/steps/abundance.py "{bam_file}" ... "{abundance_file}"
 ```
 
 * `input` / `output` list **variable names**, not paths. Each is expanded to its
@@ -271,3 +274,21 @@ Helper programs live in `steps/` (`abundance.py`, `mappability.py`,
   contains `{windowsize}`).
 * With `execute_copy_outputs`, two steps in one job producing the same output
   variable raise an error.
+
+## 8. Packaging (pip)
+
+`pyproject.toml` makes the repository root the Python package `mfaseq_pipeline`
+(distribution name `mfaseq-pipeline`, `package-dir = {"mfaseq_pipeline" = "."}`,
+plus an empty root `__init__.py`). The engine, all `*.yaml` files (including
+`env.yaml`) and everything under `steps/` (including the VeloGP submodule) are
+installed together into `site-packages/mfaseq_pipeline/`, so the engine finds the
+pipelines next to itself and `{<name>_dir}/steps/...` resolves exactly as in a
+checkout. The console script `arubaito` calls `mfaseq_pipeline.arubaito:main`.
+
+* Helper scripts are invoked through their interpreter (`python3 …`, `Rscript …`)
+  rather than relying on the executable bit.
+* pip cannot install the external tools; users create the conda environment from
+  `env.yaml` (downloaded from GitHub, or from a clone) and pip-install into it.
+* `pip install -e .` from a clone uses the clone's files directly.
+* Building creates `mfaseq_pipeline.egg-info/` in the repository root; it is
+  covered by `.gitignore`.

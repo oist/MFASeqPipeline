@@ -54,7 +54,7 @@ targets:
 ```
 
 ```bash
-./arubaito.py rnaseq genome samples
+arubaito rnaseq genome samples
 ```
 
 The counts are written to `/data/myproject/results/rna1.genecounts.tab`.

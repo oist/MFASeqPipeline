@@ -19,26 +19,48 @@ particular the speed of replication forks over time with
     count RNA-seq reads per gene
 
 The pipelines are built on **arubaito**, a simple workflow engine contained in
-the script `arubaito.py`. Pipelines are YAML files that define processing steps
-as shell scripts, and a project is a small YAML file that names the samples and
-the steps to run for each. See [docs/arubaito.md](docs/arubaito.md).
+the script `arubaito.py` and installed as the command `arubaito`. Pipelines are
+YAML files that define processing steps as shell scripts, and a project is a
+small YAML file that names the samples and the steps to run for each. See [docs/arubaito.md](docs/arubaito.md).
 
 ## Installation
 
-Clone the repository together with its submodule VeloGP:
+MFASeqPipeline is installed with pip into a conda environment, which provides
+the external tools the pipelines use (bwa, samtools, sra-tools, Subread, R,
+PyTorch, gnuplot, …). First download the environment file and create and
+activate the environment:
+
+```bash
+curl -O https://raw.githubusercontent.com/oist/MFASeqPipeline/master/env.yaml
+```
+
+```bash
+conda env create -f env.yaml
+```
+
+```bash
+conda activate mfa_pipeline
+```
+
+Then install MFASeqPipeline into it:
+
+```bash
+pip install git+https://github.com/oist/MFASeqPipeline.git
+```
+
+This installs the command `arubaito` together with all pipelines. The pipelines
+are found inside the installed package, so project files can live in any
+directory. Run `arubaito` from the directory that contains your project file.
+
+### Working from a clone
+
+To modify the pipelines, clone the repository together with its submodule
+VeloGP, create the environment from the clone, and install the clone in editable
+mode. Changes to the clone then take effect immediately:
 
 ```bash
 git clone --recurse-submodules git@github.com:oist/MFASeqPipeline.git
 ```
-
-If you already cloned it without submodules, fetch them with:
-
-```bash
-git -C MFASeqPipeline submodule update --init
-```
-
-Then create and activate the conda environment, which contains all required tools
-(bwa, samtools, sra-tools, Subread, R, PyTorch, gnuplot, …):
 
 ```bash
 conda env create -f MFASeqPipeline/env.yaml
@@ -48,9 +70,11 @@ conda env create -f MFASeqPipeline/env.yaml
 conda activate mfa_pipeline
 ```
 
-The pipelines are run with `MFASeqPipeline/arubaito.py`. Pipeline files are found
-next to `arubaito.py`, so project files can live in any directory. Run
-`arubaito.py` from the directory that contains your project file.
+```bash
+pip install -e MFASeqPipeline
+```
+
+Running `MFASeqPipeline/arubaito.py` directly, without installing, also works.
 
 ## Quick start
 
@@ -125,7 +149,7 @@ samples come before the exponential samples that use them as references. `--jobs
 processes two samples at a time:
 
 ```bash
-/path/to/MFASeqPipeline/arubaito.py --jobs 2 myproject genome stationary exponential
+arubaito --jobs 2 myproject genome stationary exponential
 ```
 
 Results are written to `/data/myproject/results/`. The main ones are:

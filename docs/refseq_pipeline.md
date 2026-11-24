@@ -31,7 +31,7 @@ targets:
 ```
 
 ```bash
-./arubaito.py genomes ecoli
+arubaito genomes ecoli
 ```
 
 This creates `/data/myproject/refseq/GCF_000005845.2.fna`, `.gff` and `.gbff`.

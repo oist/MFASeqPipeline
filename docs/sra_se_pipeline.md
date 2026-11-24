@@ -69,7 +69,7 @@ targets:
 ```
 
 ```bash
-./arubaito.py public genome reference growing
+arubaito public genome reference growing
 ```
 
 For each sample, `sra` and `fastq` create `/data/public/sra/<accession>.sra` and

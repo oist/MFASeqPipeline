@@ -59,7 +59,7 @@ targets:
 Run the targets in dependency order:
 
 ```bash
-./arubaito.py myproject genome reference growing
+arubaito myproject genome reference growing
 ```
 
 Results go to `/data/myproject/results/`. For example,

@@ -1,7 +1,9 @@
 # arubaito
 
 `arubaito` is the small workflow engine that runs the MFASeqPipeline pipelines.
-It is a single Python script, `arubaito.py`, configured by YAML files.
+It is a single Python script, `arubaito.py`, configured by YAML files. Installing
+MFASeqPipeline with pip (see the [README](../README.md#installation)) provides it
+as the command `arubaito`.
 
 arubaito executes **jobs**. A job is a sequence of **steps**: map the reads,
 compute statistics, compute abundances, and so on. Each job has its own set of
@@ -9,7 +11,7 @@ compute statistics, compute abundances, and so on. Each job has its own set of
 **targets**, and you run a workflow by naming the targets to execute:
 
 ```bash
-./arubaito.py myproject stationary exponential
+arubaito myproject stationary exponential
 ```
 
 This loads `myproject.yaml`, then runs all jobs of target `stationary`, then all
@@ -110,6 +112,8 @@ use:
 ```
 
 * Files are looked up in the current directory first, then next to `arubaito.py`.
+  When MFASeqPipeline is installed with pip, that is the installed package,
+  which contains all pipelines.
 * The including file wins over the files it uses, and **earlier entries in the
   list win over later ones**. Above, `refseq_pipeline`'s `genome_file` replaces
   `mfa_pipeline`'s.
@@ -178,7 +182,7 @@ targets:
   `--jobs 4` runs up to four at a time.
 * `all` stands for all top-level targets.
 * `KEY=VALUE` arguments after the targets override variables for this run:
-  `./arubaito.py myproject exponential windowsize=20k`.
+  `arubaito myproject exponential windowsize=20k`.
 * Options must come before the configuration name or at the very end of the
   command line. `--list-targets` shows all targets and their jobs. `--dry` shows
   what would run without running it.
