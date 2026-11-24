@@ -34,9 +34,8 @@ map_step:
           -O BAM -l 7 -o "{bam_file}.in-progress" \
           -
     
-    wait $r1_pid
-    wait $r2_pid
-    
+    wait $r_pid
+
     mv "{bam_file}.in-progress" "{bam_file}"
     samtools index -@ {step_cores} "{bam_file}" "{bam_index_file}"
 mappability_step:
