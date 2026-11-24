@@ -193,9 +193,9 @@ targets:
 * Convention: `target_label` (default `{sample}`) names logs, tmp dirs and
   cluster jobs.
 * Elements of a job list are always taken as job dicts; a list element of the
-  form `{override: ..., targets: ...}` is *not* treated as a nested group (the
-  third example in the code comment above `add_target` does not actually work).
-  Use a dict with named sub-targets instead.
+  form `{override: ..., targets: ...}` is *not* treated as a nested group. Use a
+  dict with named sub-targets instead (see the third example in the comment
+  above `add_target`).
 
 ### Running targets
 

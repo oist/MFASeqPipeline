@@ -147,28 +147,31 @@ def add_targets(tdefs, tpath=[], tcfg=None):
 #
 # A target can be
 #   a) A "target group" comprising named targets. Target groups are represented by a dictionary.
-#      A special key "overrides" can be used to override configuration settings for the whole group
+#      A special key "override" can be used to override configuration settings for the whole group
 #   b) A "job list" comprising a list of jobs. Job lists are represented either by a list of dictionaries,
 #      with each dictionary containing the configuration settings for one job. Or by a dictionary
-#      where the special key "targets" contains the job list. In this case, the special key "overrides"
+#      where the special key "targets" contains the job list. In this case, the special key "override"
 #      can be used to override configuration settings for the whole list. If any other key is present,
 #      it is treated as a named subtarget as in (a), making the target both a job list and a target group
 #
-# The top-level "targets" settings must be a target group. At lower levels, "target groups" and "job lists"
-# can be nested freely. When "target groups" are  (including "job lists" inside "job lists"; this however requires representing the
-# upper-level job lists are dictionaries, not plain lists.
+# The top-level "targets" setting must be a target group. Below that, target groups and job lists can
+# be nested freely, with one restriction: the elements of a plain list are always jobs, never nested
+# groups. To nest job lists inside job lists, the outer level must be a dictionary, i.e. a target group
+# or a dictionary with a "targets" key.
+#
+# Every named target at every level becomes a target of its own, containing all jobs below it.
 #
 # Examples:
 #
-# 1. A target "target_a_listing_jobs" which simply lists jobs
+# 1. A target "jobs_A_and_B" which simply lists jobs
 # targets:
 #   jobs_A_and_B:
 #     - sample: A
-#       some_setting: value_for_sample_A 
+#       some_setting: value_for_sample_A
 #     - sample: B
 #       some_setting: value_for_sample_B
 #
-# 2. Three targets where "jobs_C_D_and_more" contains all jobs in "jobs_C_D" and all job in "more_jobs".
+# 2. Three targets where "jobs_C_D_and_more" contains all jobs in "jobs_C_D" and all jobs in "more_jobs".
 #   jobs_C_D_and_more:
 #     jobs_C_D:
 #       override:
@@ -177,27 +180,28 @@ def add_targets(tdefs, tpath=[], tcfg=None):
 #         - sample: C
 #           some_setting: value_for_sample_C
 #         - sample: D
-#           some_setting: value_for_sample_D:
+#           some_setting: value_for_sample_D
 #     more_jobs:
 #       ...
 #
-# 3. A target "jobs_E+" which contains jobs for sample E-H with some settings shared between the jobs.
-#    Equivalent to a simple job list that repeats the shared settings for each job
-#   jobs_E+:
+# 3. A target "jobs_E-H" which contains jobs for samples E-H with some settings shared between the jobs.
+#    Equivalent to a simple job list that repeats the shared settings for each job. The sub-groups
+#    must be named, and thus also become targets "jobs_E_F" and "jobs_G_H".
+#   jobs_E-H:
 #     override:
-#       some_other_settings: value_for_samples_E-H
-#     targets:
-#       - override:
-#           some_third_settings: value_for_samples_E_F 
-#         targets:
-#           - sample: E
-#           - sample: F
-#       - override:
-#           some_third_setting: value_for_samples_G_H
-#         targets:
-#           - sample: G
-#           - sample: H
-#           ...
+#       some_other_setting: value_for_samples_E-H
+#     jobs_E_F:
+#       override:
+#         some_third_setting: value_for_samples_E_F
+#       targets:
+#         - sample: E
+#         - sample: F
+#     jobs_G_H:
+#       override:
+#         some_third_setting: value_for_samples_G_H
+#       targets:
+#         - sample: G
+#         - sample: H
 def add_target(tdef, tpath=[], tcfg=None):
     global TARGETS
     if isinstance(tdef, list):
