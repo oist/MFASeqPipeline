@@ -49,7 +49,7 @@ mappability_step:
   override:
     step_memory_gb: '{memory_map_gb}'
   script: |
-    {mfa_pipeline_dir}/steps/mappability.py "{genome_file}" "{genome_index_prefix}" "{genome_circular}" \
+    python3 {mfa_pipeline_dir}/steps/mappability.py "{genome_file}" "{genome_index_prefix}" "{genome_circular}" \
       "$(grep read_length "{stats_file}" | cut -f 2)" \
       "$(grep read_length "{stats_file}" | cut -f 2)" \
       "{paired_end}" "{mapping_quality}" \

@@ -168,7 +168,7 @@ mapstats_step:
   override:
     step_cores: 1
   script: |
-    {mfa_pipeline_dir}/steps/mapping_statistics.py "{bam_file}" "{stats_file}"
+    python3 {mfa_pipeline_dir}/steps/mapping_statistics.py "{bam_file}" "{stats_file}"
 mappability_step:
   input:
     - genome_file
@@ -180,7 +180,7 @@ mappability_step:
   override:
     step_memory_gb: '{memory_map_gb}'
   script: |
-    {mfa_pipeline_dir}/steps/mappability.py "{genome_file}" "{genome_index_prefix}" "{genome_circular}" \
+    python3 {mfa_pipeline_dir}/steps/mappability.py "{genome_file}" "{genome_index_prefix}" "{genome_circular}" \
       "$(grep insert_size "{stats_file}" | cut -f 2)" \
       "$(grep read_length "{stats_file}" | cut -f 2)" \
       "{paired_end}" "{mapping_quality}" \
@@ -201,7 +201,7 @@ abundance_step:
     step_cores: 1
     log_label: '.w{windowsize}bp'
   script: |
-    {mfa_pipeline_dir}/steps/abundance.py \
+    python3 {mfa_pipeline_dir}/steps/abundance.py \
       "{bam_file}" "{mappability_file}" \
       "{reference_bam_file}" "{reference_mappability_file}" \
       "{paired_end}" "{mapping_quality}" "{windowsize}" "{abundance_file}"
@@ -222,7 +222,7 @@ velocity_oscillation_step:
   output:
     - velocity_oscillation_file
   script: |
-    {mfa_pipeline_dir}/steps/fit_velocity_oscillation.R \
+    Rscript {mfa_pipeline_dir}/steps/fit_velocity_oscillation.R \
       "{genome_name}" "{velocity_oscillation_model}" "{growthrate_perhour}" "{abundance_file}" "{velocity_oscillation_file}" \
       "{step_cores}"
 velogp_step:
