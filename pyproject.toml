@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mfaseq-pipeline"
+version = "0.1.0"
+description = "Pipelines for marker frequency analysis (MFA-seq) data, run by the arubaito workflow engine"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = ["pyyaml"]
+
+[project.urls]
+Homepage = "https://github.com/oist/MFASeqPipeline"
+
+[project.scripts]
+arubaito = "mfaseq_pipeline.arubaito:main"
+
+# The repository root is the package: the engine (arubaito.py), the pipeline
+# YAML files and steps/ are installed together into mfaseq_pipeline/, so the
+# engine finds the pipelines, and the pipelines their helper scripts, next to
+# itself exactly as in a checkout.
+[tool.setuptools]
+package-dir = { "mfaseq_pipeline" = "." }
+packages = ["mfaseq_pipeline"]
+
+[tool.setuptools.package-data]
+mfaseq_pipeline = ["*.yaml", "steps/**/*"]
+
+[tool.setuptools.exclude-package-data]
+mfaseq_pipeline = ["steps/**/.git", "steps/**/__pycache__/*", "steps/**/*.pyc"]
