@@ -2,7 +2,7 @@
 
 File: `mfa_pipeline.yaml`. Single-end variant:
 [mfa_se_pipeline](mfa_se_pipeline.md). For how configurations, steps and
-targets work in general, see [summary.md](../summary.md).
+targets work in general, see [summary.md](summary.md).
 
 ## Summary
 

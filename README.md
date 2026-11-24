@@ -183,7 +183,7 @@ the `execute_cmd` and `execute_copy_outputs` lines (see
 
 * [docs/arubaito.md](docs/arubaito.md): how arubaito works: steps, variables,
   targets, and running on HPC clusters.
-* [summary.md](summary.md): a compact technical reference of the engine.
+* [docs/summary.md](docs/summary.md): a compact technical reference of the engine.
 
 ### Pipelines
 
