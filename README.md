@@ -117,7 +117,7 @@ exp2	0.693
 ```
 
 `origins.bed` gives the location of the replication origin, e.g. for *E. coli*
-(see VeloGP's [feature file format](steps/velogp/docs/features_format.md)):
+(see VeloGP's [feature file format](https://github.com/oist/VeloGP/blob/master/docs/features_format.md)):
 
 ```
 U00096.3	3925743	3925975	oriC

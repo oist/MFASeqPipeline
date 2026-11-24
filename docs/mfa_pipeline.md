@@ -198,8 +198,8 @@ defined, in `steps/fit_velocity_oscillation.R`.
 ### velogp
 
 Fits a Gaussian-process model of fork speed over time, and optionally of delays at
-given genomic features, using [VeloGP](../steps/velogp/README.md). The model and
-its options are described in [velogp.md](../steps/velogp/docs/velogp.md).
+given genomic features, using [VeloGP](https://github.com/oist/VeloGP). The model and
+its options are described in [velogp.md](https://github.com/oist/VeloGP/blob/master/docs/velogp.md).
 
 * **Input** `abundance_file`: the columns used are set by `velogp_abd_columns`.
 * **Input** `genome_file` (FASTA).
@@ -208,7 +208,7 @@ its options are described in [velogp.md](../steps/velogp/docs/velogp.md).
   genome annotation) and `origin_file` (`{base_dir}/origins.bed`,
   [BED](https://samtools.github.io/hts-specs/BEDv1.pdf)): the features in which
   origins and vx features are looked up, see
-  [features_format.md](../steps/velogp/docs/features_format.md).
+  [features_format.md](https://github.com/oist/VeloGP/blob/master/docs/features_format.md).
 * **Input** the growth rate `growthrate_perhour`, by default looked up in
   `growthrates_file`, see [growthrates_format.md](growthrates_format.md).
 * Setting `origins` (default `origin_of_replication`): the replication origins, as a
@@ -220,32 +220,32 @@ its options are described in [velogp.md](../steps/velogp/docs/velogp.md).
   are estimated); `velogp_errormodel`; `velogp_seed`; `velogp_extra_args`.
   `velogp_suffix` is added to all output names and to the log name.
 * **Output** `velogp_abundance_file` (`{sample}.velogp.abd.gz`): observed and fitted
-  abundance, see [fitted_abundance_format.md](../steps/velogp/docs/fitted_abundance_format.md).
+  abundance, see [fitted_abundance_format.md](https://github.com/oist/VeloGP/blob/master/docs/fitted_abundance_format.md).
 * **Output** `velogp_vt_file` (`{sample}.velogp.vt.gz`): fitted fork velocity over
   time and replisome trajectories, see
-  [trajectories_format.md](../steps/velogp/docs/trajectories_format.md).
+  [trajectories_format.md](https://github.com/oist/VeloGP/blob/master/docs/trajectories_format.md).
 * **Output** `velogp_vx_file` (`{sample}.velogp.vx.gz`): feature delays, see
-  [vx_feature_delays_format.md](../steps/velogp/docs/vx_feature_delays_format.md).
+  [vx_feature_delays_format.md](https://github.com/oist/VeloGP/blob/master/docs/vx_feature_delays_format.md).
 * **Output** `velogp_abundance_plot`, `velogp_vt_plot` (`.pdf`): plots of the above,
-  see [velogp.md](../steps/velogp/docs/velogp.md#plots-and-console-output).
+  see [velogp.md](https://github.com/oist/VeloGP/blob/master/docs/velogp.md#plots-and-console-output).
 * **Output** `velogp_objects_file` (`{sample}.velogp.pkl`): the fitted model, the
-  input for `velomix`, see [objects_format.md](../steps/velogp/docs/objects_format.md).
+  input for `velomix`, see [objects_format.md](https://github.com/oist/VeloGP/blob/master/docs/objects_format.md).
 
 ### velomix
 
 Starts from a fitted VeloGP model and fits the VeloMix mixture model of stochastic
 origin firing and replisome stalling at the sites given in `velomix_stall_sites`
 (`python -m velogp.velomix`). The model and its options are described in
-[velomix.md](../steps/velogp/docs/velomix.md).
+[velomix.md](https://github.com/oist/VeloGP/blob/master/docs/velomix.md).
 
 * **Input** `velogp_objects_file`: from `velogp`.
 * Settings: `velomix_stall_sites`, `velomix_seed`, `velomix_extra_args`.
   `velomix_suffix` is added to all output names.
 * **Output** `velomix_probabilities_file` (`{sample}.velomix.p.gz`): mixture
-  probabilities, see [probabilities_format.md](../steps/velogp/docs/probabilities_format.md).
+  probabilities, see [probabilities_format.md](https://github.com/oist/VeloGP/blob/master/docs/probabilities_format.md).
 * **Output** `velomix_abundance_file`, `velomix_vt_file`, `velomix_vx_file`
   (`.abd.gz`, `.vt.gz`, `.vx.gz`) and plots `velomix_abundance_plot`,
   `velomix_vt_plot` (`.pdf`): same formats as for `velogp`; plots are described in
-  [velomix.md](../steps/velogp/docs/velomix.md#plots-and-console-output).
+  [velomix.md](https://github.com/oist/VeloGP/blob/master/docs/velomix.md#plots-and-console-output).
 * **Output** `velomix_objects_file` (`{sample}.velomix.pkl`): the fitted model, see
-  [objects_format.md](../steps/velogp/docs/objects_format.md).
+  [objects_format.md](https://github.com/oist/VeloGP/blob/master/docs/objects_format.md).
