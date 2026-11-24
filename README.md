@@ -52,11 +52,11 @@ This installs the command `arubaito` together with all pipelines. The pipelines
 are found inside the installed package, so project files can live in any
 directory. Run `arubaito` from the directory that contains your project file.
 
-### Working from a clone
+### Alternative: running from a clone without installing
 
-To modify the pipelines, clone the repository together with its submodule
-VeloGP, create the environment from the clone, and install the clone in editable
-mode. Changes to the clone then take effect immediately:
+Instead of installing with pip, you can also check out the repository, create
+the environment from it, and run `arubaito.py` from the checkout directly. Clone
+the repository together with its submodule VeloGP:
 
 ```bash
 git clone --recurse-submodules git@github.com:oist/MFASeqPipeline.git
@@ -70,11 +70,23 @@ conda env create -f MFASeqPipeline/env.yaml
 conda activate mfa_pipeline
 ```
 
+Then use `/path/to/MFASeqPipeline/arubaito.py` wherever this documentation uses
+the `arubaito` command, for example:
+
+```bash
+/path/to/MFASeqPipeline/arubaito.py myproject genome stationary exponential
+```
+
+If you download the repository as an archive instead of cloning it, the archive
+does not contain VeloGP; download [VeloGP](https://github.com/oist/VeloGP) as
+well and put it into `MFASeqPipeline/steps/velogp`.
+
+To get the `arubaito` command while still using the files in the checkout (e.g.
+to modify the pipelines), install the checkout in editable mode:
+
 ```bash
 pip install -e MFASeqPipeline
 ```
-
-Running `MFASeqPipeline/arubaito.py` directly, without installing, also works.
 
 ## Quick start
 

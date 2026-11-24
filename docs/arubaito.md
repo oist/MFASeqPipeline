@@ -3,7 +3,8 @@
 `arubaito` is the small workflow engine that runs the MFASeqPipeline pipelines.
 It is a single Python script, `arubaito.py`, configured by YAML files. Installing
 MFASeqPipeline with pip (see the [README](../README.md#installation)) provides it
-as the command `arubaito`.
+as the command `arubaito`. Without installing, run `arubaito.py` from a checkout
+of the repository instead; everything described here works the same way.
 
 arubaito executes **jobs**. A job is a sequence of **steps**: map the reads,
 compute statistics, compute abundances, and so on. Each job has its own set of
