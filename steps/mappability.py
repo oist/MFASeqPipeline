@@ -77,7 +77,7 @@ BWA = subprocess.Popen(
 # alignment is done on a separate thread to avoid dead-lock issues.
 def read_alignments():
     qname_pattern = re.compile(r"^(.*):([0-9]*):([0-9]*)$")
-    is_prop, is_rev, is_1st, is_2nd = 0x2, 0x10, 0x40, 0x80
+    is_prop, is_unmapped, is_rev, is_1st, is_2nd = 0x2, 0x4, 0x10, 0x40, 0x80
     for line in BWA.stdout:
         # Skip header lines
         if line[0] == "@":
@@ -124,8 +124,10 @@ def read_alignments():
                 # Otherwise, just use the range where the read mapped to
                 # Note: Technically, we should compute the length along the reference from the CIGAR,
                 # but we just use the sequene length instead for simplicity
-                if VERBOSE:
-                    print(f"        : WRONG TARGET: {rname}:{pos}-{pos + len(seq)} (singleton)", file=sys.stderr)
+                # Unmapped reads have no target to flag
+                if flag & is_unmapped == 0:
+                    if VERBOSE:
+                        print(f"        : WRONG TARGET: {rname}:{pos}-{pos + len(seq)} (singleton)", file=sys.stderr)
                     MAPABLE[rname].chop(pos, pos + len(seq))
         else:
             if VERBOSE:
