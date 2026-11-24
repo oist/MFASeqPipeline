@@ -41,7 +41,9 @@ entries take precedence, so its `genome_file` and `gff_file` replace the
 defaults of `mfa_pipeline`:
 
 ```yaml
-use: [ refseq_pipeline, mfa_pipeline ]
+use:
+  - refseq_pipeline
+  - mfa_pipeline
 refseq: GCF_000005845.2
 targets:
   genome:

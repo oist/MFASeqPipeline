@@ -42,7 +42,9 @@ growing sample made of two runs from SRA. It then analyses them with
 Create `public.yaml`:
 
 ```yaml
-use: [ sra_se_pipeline2, mfa_se_pipeline ]
+use:
+  - sra_se_pipeline2
+  - mfa_se_pipeline
 project: public
 base_dir: /data                 # project_dir = /data/public
 # Run steps locally instead of with Slurm

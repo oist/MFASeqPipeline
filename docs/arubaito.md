@@ -104,7 +104,9 @@ either step overrides.
 A configuration can include other files with `use`:
 
 ```yaml
-use: [ refseq_pipeline, mfa_pipeline ]
+use:
+  - refseq_pipeline
+  - mfa_pipeline
 ```
 
 * Files are looked up in the current directory first, then next to `arubaito.py`.
@@ -140,7 +142,12 @@ A target can also be a **group** (a dictionary) that contains:
 targets:
   experiment:
     override:                       # applies to all jobs below
-      steps: [ map, mapstats, mappability, abundance, velogp ]
+      steps:
+        - map
+        - mapstats
+        - mappability
+        - abundance
+        - velogp
       windowsize: 5k
     stationary:
       - sample: stat1

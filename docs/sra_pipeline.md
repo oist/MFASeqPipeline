@@ -46,7 +46,9 @@ It assumes this layout:
 Create `public.yaml`:
 
 ```yaml
-use: [ sra_pipeline, mfa_pipeline ]
+use:
+  - sra_pipeline
+  - mfa_pipeline
 project: public
 base_dir: /data                 # project_dir = /data/public
 # Run steps locally instead of with Slurm

@@ -35,7 +35,9 @@ the genome and its annotation are at `/data/genome.fasta` and `/data/genome.gff`
 `rnaseq.yaml`:
 
 ```yaml
-use: [ rnaseq_pipeline, mfa_pipeline ]
+use:
+  - rnaseq_pipeline
+  - mfa_pipeline
 project: myproject
 base_dir: /data                 # project_dir = /data/myproject
 # Run steps locally instead of with Slurm
@@ -62,7 +64,10 @@ To download the genome from NCBI instead, add
 earlier entry wins, so its `genome_file` and `gff_file` replace the defaults:
 
 ```yaml
-use: [ refseq_pipeline, rnaseq_pipeline, mfa_pipeline ]
+use:
+  - refseq_pipeline
+  - rnaseq_pipeline
+  - mfa_pipeline
 refseq: GCF_000005845.2
 targets:
   genome:

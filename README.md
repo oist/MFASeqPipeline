@@ -99,13 +99,23 @@ targets:
       steps: [ genome_index ]
   stationary:
     override:
-      steps: [ map, fastqc, mapstats, mappability ]
+      steps:
+        - map
+        - fastqc
+        - mapstats
+        - mappability
     targets:
       - sample: stat1
       - sample: stat2
   exponential:
     override:
-      steps: [ map, fastqc, mapstats, mappability, abundance, velogp ]
+      steps:
+        - map
+        - fastqc
+        - mapstats
+        - mappability
+        - abundance
+        - velogp
     targets:
       - sample: exp1
         reference: stat1
