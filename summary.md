@@ -210,6 +210,11 @@ targets:
 
 ### Options
 
+Options must come **before `CONFIG`** or **after everything else**. An option
+placed between `CONFIG`, the targets and the `KEY=VALUE` settings splits that
+list, and the arguments after it are rejected as "unrecognized arguments"
+(e.g. `arubaito.py cfg t1 --dry t2` fails; `arubaito.py --dry cfg t1 t2` works).
+
 | Option | Effect |
 |---|---|
 | `--list-targets` | print every target with its jobs' variables, exit |
