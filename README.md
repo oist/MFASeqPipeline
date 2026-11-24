@@ -100,7 +100,7 @@ Arrange the input files like this:
 ```
 /data/genome.fasta                       # reference genome (FASTA)
 /data/genome.gff                         # genome annotation (GFF3)
-/data/origins.bed                        # replication origin(s), named origin_of_replication
+/data/origins.bed                        # replication origin(s) (BED), e.g. named oriC
 /data/myproject/fastq/stat1_r1.fastq.gz  /data/myproject/fastq/stat1_r2.fastq.gz
 /data/myproject/fastq/stat2_r1.fastq.gz  /data/myproject/fastq/stat2_r2.fastq.gz
 /data/myproject/fastq/exp1_r1.fastq.gz   /data/myproject/fastq/exp1_r2.fastq.gz
@@ -116,12 +116,20 @@ exp1	1.386
 exp2	0.693
 ```
 
+`origins.bed` gives the location of the replication origin, e.g. for *E. coli*
+(see VeloGP's [feature file format](steps/velogp/docs/features_format.md)):
+
+```
+U00096.3	3925743	3925975	oriC
+```
+
 Create the project file `myproject.yaml`:
 
 ```yaml
 use: mfa_pipeline
 project: myproject
 base_dir: /data                 # project directory is {base_dir}/{project}
+origins: oriC                   # name of the origin in origins.bed
 # Run steps on this machine instead of submitting them with Slurm
 execute_cmd: '{script_file}'
 execute_copy_outputs: False
