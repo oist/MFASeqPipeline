@@ -38,7 +38,7 @@ git -C MFASeqPipeline submodule update --init
 ```
 
 Then create and activate the conda environment, which contains all required tools
-(bwa, samtools, sra-tools, Subread, R, PyTorch, …):
+(bwa, samtools, sra-tools, Subread, R, PyTorch, gnuplot, …):
 
 ```bash
 conda env create -f MFASeqPipeline/env.yaml
@@ -51,9 +51,6 @@ conda activate mfa_pipeline
 The pipelines are run with `MFASeqPipeline/arubaito.py`. Pipeline files are found
 next to `arubaito.py`, so project files can live in any directory. Run
 `arubaito.py` from the directory that contains your project file.
-
-The `abundance_plot` step also needs [gnuplot](http://www.gnuplot.info/), which
-is not part of the environment.
 
 ## Quick start
 
