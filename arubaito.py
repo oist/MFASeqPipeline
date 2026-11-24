@@ -548,6 +548,8 @@ try:
         in_targets = in_targets and "=" not in arg
         if in_targets:
             if arg == "all":
+                if not CFG.get("targets"):
+                    raise ArgumentError("target 'all' requested, but the configuration defines no targets")
                 ARGS.targets.extend(CFG["targets"].keys())
             else:
                 ARGS.targets.append(arg)
