@@ -59,7 +59,7 @@ the environment from it, and run `arubaito.py` from the checkout directly. Clone
 the repository together with its submodule VeloGP:
 
 ```bash
-git clone --recurse-submodules git@github.com:oist/MFASeqPipeline.git
+git clone --recurse-submodules https://github.com/oist/MFASeqPipeline.git
 ```
 
 ```bash
