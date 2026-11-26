@@ -56,6 +56,9 @@ for r in SeqIO.parse(GENOME, "fasta"):
 if REGIONS != "":
     bed_file = open_file(REGIONS, "rt")
     for line in bed_file:
+        # Skip empty lines, comments and header lines
+        if (line.strip() == "") or line.startswith(("#", "track", "browser")):
+            continue
         fields = [ f.strip() for f in line.split("\t") ]
         if len(fields) < 4:
             raise RuntimeError(f"Regions BED file must have at least 4 columns, found only {len(fields)} columns in line: {line}")
