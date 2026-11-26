@@ -100,7 +100,7 @@ abundance_step:
     step_cores: 1
     log_label: '.w{windowsize}bp'
   script: |
-    python3 {mfa_pipeline_dir}/steps/abundance.py "{bam_file}" ... "{abundance_file}"
+    python3 {mfa_pipeline_dir}/steps/abundance.py --sample-bam "{bam_file}" ... --output "{abundance_file}"
 ```
 
 * `input` / `output` list **variable names**, not paths. Each is expanded to its

@@ -201,10 +201,24 @@ abundance_step:
     step_cores: 1
     log_label: '.w{windowsize}bp'
   script: |
+    if [[ "{paired_end}" == "1" || "{paired_end}" == "true" ]]; then
+      PAIRED_ARGS=(--paired)
+    else
+      PAIRED_ARGS=()
+    fi
+    if [[ -n "{reference_bam_file}" || -n "{reference_mappability_file}" ]]; then
+      REFERENCE_ARGS=(--reference-bam "{reference_bam_file}" --reference-mappability "{reference_mappability_file}")
+    else
+      REFERENCE_ARGS=()
+    fi
     python3 {mfa_pipeline_dir}/steps/abundance.py \
-      "{bam_file}" "{mappability_file}" \
-      "{reference_bam_file}" "{reference_mappability_file}" \
-      "{paired_end}" "{mapping_quality}" "{windowsize}" "{abundance_file}"
+      --sample-bam "{bam_file}" \
+      --sample-mappability "{mappability_file}" \
+      "${{REFERENCE_ARGS[@]}}" \
+      "${{PAIRED_ARGS[@]}}" \
+      --mapping-quality "{mapping_quality}" \
+      --windowsize "{windowsize}" \
+      --output "{abundance_file}"
 abundance_plot_step:
   input:
     - abundance_file

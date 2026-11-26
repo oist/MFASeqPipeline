@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 import sys
 import os
 import io
@@ -242,19 +243,50 @@ def open_output(filename: str):
 sys.stdout = io.TextIOWrapper(open(sys.stdout.fileno(), 'wb', 0), write_through=True)
 
 # Command-line arguments
-SAM_BAM_FILE = sys.argv[1]
-SAM_MAPPABILITY_FILE = sys.argv[2]
-REF_BAM_FILE = sys.argv[3]
-REF_MAPPABILITY_FILE = sys.argv[4]
-IS_PAIRED = sys.argv[5] in ["1", "true"]
-MAPQ = int(sys.argv[6])
-WINDOWSIZE = sys.argv[7]
-ABUNDANCE_FILE = sys.argv[8]
+def nonempty(value: str) -> str:
+    if value == "":
+        raise argparse.ArgumentTypeError("must not be empty")
+    return value
 
-if WINDOWSIZE.endswith("k"):
-    WINDOWSIZE = int(WINDOWSIZE[0:-1]) * 1000
-else:
-    WINDOWSIZE = int(WINDOWSIZE)
+def windowsize(value: str) -> int:
+    try:
+        if value.endswith("k"):
+            return int(value[0:-1]) * 1000
+        else:
+            return int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"invalid window size '{value}', expected e.g. 500 or 10k")
+
+PARSER = argparse.ArgumentParser(
+    description="Compute DNA abundances in windows along the genome, optionally relative to a reference sample")
+PARSER.add_argument("--sample-bam", type=nonempty, required=True, metavar="FILE",
+                    help="BAM file of the sample")
+PARSER.add_argument("--sample-mappability", type=nonempty, required=True, metavar="FILE",
+                    help="non-mappable regions of the sample (BED)")
+PARSER.add_argument("--reference-bam", type=nonempty, metavar="FILE",
+                    help="BAM file of the reference sample (requires --reference-mappability)")
+PARSER.add_argument("--reference-mappability", type=nonempty, metavar="FILE",
+                    help="non-mappable regions of the reference sample (BED, requires --reference-bam)")
+PARSER.add_argument("--paired", action="store_true",
+                    help="reads are paired-end (default: single-end)")
+PARSER.add_argument("--mapping-quality", type=int, required=True, metavar="MAPQ",
+                    help="only use reads with at least this mapping quality")
+PARSER.add_argument("--windowsize", type=windowsize, required=True, metavar="SIZE",
+                    help="window size in bases, the suffix k means kilobases (e.g. 10k)")
+PARSER.add_argument("--output", type=nonempty, required=True, metavar="FILE",
+                    help="abundance file to write, gzip-compressed if the name ends with .gz")
+ARGS = PARSER.parse_args()
+if (ARGS.reference_bam is None) != (ARGS.reference_mappability is None):
+    PARSER.error("--reference-bam and --reference-mappability must be specified together")
+
+SAM_BAM_FILE = ARGS.sample_bam
+SAM_MAPPABILITY_FILE = ARGS.sample_mappability
+REF_BAM_FILE = ARGS.reference_bam or ""
+REF_MAPPABILITY_FILE = ARGS.reference_mappability or ""
+IS_PAIRED = ARGS.paired
+MAPQ = ARGS.mapping_quality
+WINDOWSIZE = ARGS.windowsize
+ABUNDANCE_FILE = ARGS.output
 
 # Check that sample and reference BAM refer to the same sequences before reading any reads
 if REF_BAM_FILE != "":
