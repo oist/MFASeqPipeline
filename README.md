@@ -179,6 +179,9 @@ the `execute_cmd` and `execute_copy_outputs` lines (see
 * [docs/arubaito.md](docs/arubaito.md): how arubaito works: steps, variables,
   targets, and running on HPC clusters.
 * [docs/summary.md](docs/summary.md): a compact technical reference of the engine.
+* [Running on HPC clusters](docs/arubaito.md#hpc-clusters): submitting steps with
+  Slurm, the resources they request (partition, cores, memory, time), and
+  temporary storage.
 
 ### Pipelines
 

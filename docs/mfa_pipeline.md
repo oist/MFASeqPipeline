@@ -85,7 +85,7 @@ To run on a Slurm cluster, drop the `execute_cmd` and
 | `windowsize` | `10k` | Window size for abundances (`k` = ×1000) |
 | `mapping_quality` | `20` | Minimum mapping quality used for abundances and mappability |
 | `partition_default` | `compute` | Slurm partition steps are submitted to |
-| `cores`, `memory_*_gb`, `time_default` | `32`, …, `1-0` | Resources requested per step |
+| `cores`, `memory_*_gb`, `time_default` | `32`, …, `1-0` | Resources requested per step, see [Resources](arubaito.md#resources) |
 | `execute_cmd` | `srun -p '{step_partition}' …` | Executor; `'{script_file}'` runs steps locally |
 | `execute_copy_outputs` | `True` | Write outputs to `tmp_dir` first, then copy them to their final place |
 | `steps` | `genome_index` … `velogp` | Default step list: `genome_index`, `map`, `fastqc`, `mapstats`, `mappability`, `abundance`, `velogp` |

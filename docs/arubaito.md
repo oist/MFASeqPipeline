@@ -214,6 +214,40 @@ execute_cmd: srun -p '{step_partition}' --job-name='{target_label}.{step}' --mem
 * The software the steps need, e.g. the conda environment, must be available on
   the compute nodes. `srun` passes the current environment on by default.
 
+### Resources
+
+The pipelines take the resources they request for each step from four per-step
+variables, which `execute_cmd` passes to `srun`. Their defaults come from
+pipeline-wide settings. These are defined in `mfa_pipeline`, which the other
+pipelines are used together with:
+
+| Per-step variable | `srun` option | Defaults to | Default value |
+|---|---|---|---|
+| `step_partition` | `-p` | `partition_default` | `compute` |
+| `step_cores` | `-c` | `cores` | `32` |
+| `step_memory_gb` | `--mem` (in GB) | `memory_default_gb` | `16` |
+| `step_time` | `--time` | `time_default` | `1-0` (one day) |
+
+Some steps request different resources in their `override`:
+
+| Step | Requests |
+|---|---|
+| `map` | `step_memory_gb` = `memory_map_gb` + `memory_sort_gb` (default 32 + 16), for `bwa mem` and `samtools sort`, which uses `memory_sort_gb` |
+| `mappability` | `step_memory_gb` = `memory_map_gb` (default 32), for `bwa mem` |
+| `mapstats`, `abundance` | `step_cores` = 1 |
+| `velogp`, `velomix` | `step_cores` = 4 |
+
+`mfa_se_pipeline` defines `map` and `mappability` itself, with the same memory
+settings.
+
+To adapt the resources to a cluster, change the pipeline-wide settings above, e.g.
+`cores: 8` or `partition_default: short`, in the project file, for a target or on
+the command line. Setting a `step_*` variable directly works only for steps that
+do not set it in their `override`, since a step's `override` takes precedence over
+all other settings. For example, `step_cores: 8` has no effect on `mapstats`; to
+give `map` more memory, raise `memory_map_gb` or `memory_sort_gb` instead of
+`step_memory_gb`.
+
 ### Temporary storage and copying
 
 Each job gets its own temporary directory, created with the value of `tmp_dir`
