@@ -188,7 +188,7 @@ def read_bam(bamfile, is_paired, mapq):
             for pair in pairs:
                 if (pair.forward.mapping_quality < mapq) or (pair.reverse.mapping_quality < mapq):
                     continue
-                if pair.forward.reference_start > pair.reverse.reference_end:
+                if pair.forward.reference_start >= pair.reverse.reference_end:
                     continue
                 cov[pair.forward.reference_name].fragment_inclusive(
                     start=pair.forward.reference_start, end=pair.reverse.reference_end - 1,
