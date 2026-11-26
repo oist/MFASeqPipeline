@@ -20,36 +20,19 @@ class Coverage:
         self.fragment_length_sum = 0
         self.fragment_length_count = 0
 
-    def fragment_inclusive(self, start : int, end : int, dir : int):
+    def fragment_inclusive(self, start : int, end : int):
         assert (start >= 0) and (start < self.length)
         assert (end >= 0) and (end < self.length)
-        assert dir in [-1, 1]
+        assert start <= end
         # Mark fragment start- and endpoint
         self.startingpoints[start] += 1
         self.endpoints[end] += 1
         # Increase coverage on [start, end]
-        if dir == +1:
-            return self.fragment_inclusive_internal(start, end)
-        elif dir == -1:
-            return self.fragment_inclusive_internal(end, start)
-        else:
-            raise ValueError("direction must be +1 or -1")
-    
-    def fragment_inclusive_internal(self, start : int, end : int):
-        if start <= end:
-            # [start..end]
-            self.deltas[start] += 1
-            if end < self.length - 1:
-                self.deltas[end+1] -= 1
-            self.fragment_length_sum += (end - start + 1)
-            self.fragment_length_count += 1
-        elif (start > end) and (dir == 1):
-            # [0..end] u [start...last]
-            self.deltas[0] += 1
-            self.deltas[end+1] -= -1
-            self.deltas[start] += 1
-            self.fragment_length_sum += self.length - (start - end - 1)
-            self.fragment_length_count += 1
+        self.deltas[start] += 1
+        if end < self.length - 1:
+            self.deltas[end+1] -= 1
+        self.fragment_length_sum += (end - start + 1)
+        self.fragment_length_count += 1
 
     def coverage(self) -> np.ndarray:
         return np.cumsum(self.deltas)
@@ -191,8 +174,7 @@ def read_bam(bamfile, is_paired, mapq):
                 if pair.forward.reference_start >= pair.reverse.reference_end:
                     continue
                 cov[pair.forward.reference_name].fragment_inclusive(
-                    start=pair.forward.reference_start, end=pair.reverse.reference_end - 1,
-                    dir=1)
+                    start=pair.forward.reference_start, end=pair.reverse.reference_end - 1)
         else:
             # Scan single reads, mark only the read as covered
             for read in bam:
@@ -201,8 +183,7 @@ def read_bam(bamfile, is_paired, mapq):
                 if read.mapping_quality < mapq:
                     continue
                 cov[read.reference_name].fragment_inclusive(
-                  start=read.reference_start, end=read.reference_end - 1,
-                  dir=1)
+                  start=read.reference_start, end=read.reference_end - 1)
 
         return (cov, seqlengths)
 
