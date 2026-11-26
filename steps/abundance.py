@@ -49,7 +49,7 @@ def fragment_coverage(wsize: int, flen_float: float) -> float:
     # a base in (-k, n) = [-k+1, n-1]. A fragment that starts at base i covers the bases
     # [i, i + k - 1], and overlaps the window on [ max(i, 0), min(i + k - 1, n - 1) ]. The
     # expected coverage (assuming uniformly distributed starting points) is thus
-    #      [ sum i=-k+1 to n-1 min(i + k, n) - max(i, 0) ] / (n - k + 1)
+    #      [ sum i=-k+1 to n-1 min(i + k, n) - max(i, 0) ] / (n + k - 1)
     if not math.isfinite(flen_float):
         return math.nan
     flen: int = int(round(flen_float))
