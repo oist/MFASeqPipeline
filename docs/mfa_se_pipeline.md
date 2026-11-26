@@ -21,7 +21,6 @@ per sample):
 ```
 /data/genome.fasta
 /data/genome.gff
-/data/origins.bed                        # origins, for velogp
 /data/myproject/fastq/stat.fastq.gz
 /data/myproject/fastq/exp.fastq.gz
 /data/myproject/meta/growthrates.tab     # see growthrates_format.md
@@ -49,6 +48,11 @@ targets:
       reference: stat
       steps: [ map, mapstats, mappability, abundance, velogp ]
 ```
+
+velogp looks up the replication origins in `genome.gff`, by default all
+features of type `origin_of_replication`. Set `origins` to select them by name
+or feature type instead, e.g. `origins: oriC`. If the GFF file does not contain
+the origins, list them in a BED file and set `origin_file` to it (see [velogp](mfa_pipeline.md#velogp)).
 
 ```bash
 arubaito myproject genome reference growing

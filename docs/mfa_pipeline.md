@@ -27,7 +27,6 @@ paired-end FASTQ files:
 ```
 /data/genome.fasta
 /data/genome.gff
-/data/origins.bed                        # origins, for velogp
 /data/myproject/fastq/stat_r1.fastq.gz   /data/myproject/fastq/stat_r2.fastq.gz
 /data/myproject/fastq/exp_r1.fastq.gz    /data/myproject/fastq/exp_r2.fastq.gz
 /data/myproject/meta/growthrates.tab     # see growthrates_format.md
@@ -56,6 +55,11 @@ targets:
       steps: [ map, fastqc, mapstats, mappability, abundance, abundance_plot, velogp ]
 ```
 
+velogp looks up the replication origins in `genome.gff`, by default all
+features of type `origin_of_replication`. Set `origins` to select them by name
+or feature type instead, e.g. `origins: oriC`. If the GFF file does not contain
+the origins, list them in a BED file and set `origin_file` to it (see [velogp](#velogp)).
+
 Run the targets in dependency order:
 
 ```bash
@@ -74,7 +78,8 @@ To run on a Slurm cluster, drop the `execute_cmd` and
 |---|---|---|
 | `base_dir`, `project` | — / `ProjectName` | `project_dir` is `{base_dir}/{project}` |
 | `fastq_dir`, `meta_dir`, `out_dir` | `{project_dir}/fastq`, `/meta`, `/results` | Input reads, metadata, results |
-| `genome_file`, `gff_file`, `origin_file` | `{base_dir}/genome.fasta`, `.gff`, `origins.bed` | Reference genome, annotation, origin locations |
+| `genome_file`, `gff_file` | `{base_dir}/genome.fasta`, `.gff` | Reference genome, annotation |
+| `origin_file` | `''` (none) | Origin locations (BED) for velogp, optional |
 | `genome_circular` | `True` | Whether chromosomes are circular (`True` or `False`) |
 | `sample`, `reference` | — | Sample name and its reference sample; set per target |
 | `windowsize` | `10k` | Window size for abundances (`k` = ×1000) |
@@ -206,7 +211,7 @@ its options are described in [velogp.md](https://github.com/oist/VeloGP/blob/mas
 * **Input** `genome_file` (FASTA).
 * **Input** `gff_file`
   ([GFF3](https://github.com/The-Sequence-Ontology/Specifications/blob/master/gff3.md)
-  genome annotation) and `origin_file` (`{base_dir}/origins.bed`,
+  genome annotation) and `origin_file` (optional, default `''`, i.e. none,
   [BED](https://samtools.github.io/hts-specs/BEDv1.pdf)): the features in which
   origins and vx features are looked up, see
   [features_format.md](https://github.com/oist/VeloGP/blob/master/docs/features_format.md).
