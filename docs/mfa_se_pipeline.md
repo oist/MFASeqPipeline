@@ -72,9 +72,7 @@ Maps single-end reads with `bwa mem`, then sorts and indexes the alignments.
 * **Input** `read_file` (default `{fastq_dir}/{sample}.fastq.gz`):
   [FASTQ](https://en.wikipedia.org/wiki/FASTQ_format), optionally gzip- or
   bzip2-compressed.
-* **Input** `genome_index_dir`: from `genome_index`. (Unlike in `mfa_pipeline`,
-  it is not listed as a formal input. It is only read through
-  `genome_index_prefix`, so it is not staged with `execute_copy_inputs`.)
+* **Input** `genome_index_dir`: from `genome_index`.
 * **Output** `bam_file` (`{sample}.bam`): sorted
   [BAM](https://samtools.github.io/hts-specs/SAMv1.pdf).
 * **Output** `bam_index_file` (`{sample}.bai`): BAM index.

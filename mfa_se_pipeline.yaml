@@ -5,6 +5,7 @@ use:
 map_step:
   input:
     - read_file
+    - genome_index_dir
   output:
     - bam_file
     - bam_index_file
