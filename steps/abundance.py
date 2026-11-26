@@ -180,6 +180,8 @@ def read_bam(bamfile, is_paired, mapq):
             for read in bam:
                 if read.is_unmapped:
                     continue
+                if read.is_secondary or read.is_supplementary:
+                    continue
                 if read.mapping_quality < mapq:
                     continue
                 cov[read.reference_name].fragment_inclusive(
