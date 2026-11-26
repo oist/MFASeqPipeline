@@ -269,12 +269,11 @@ velogp_step:
     step_cores: 4
     log_label: '{velogp_suffix}'
   script: |
-    shopt -s nocasematch
-    if [[ "{velogp_errormodel}" == "true" || "{velogp_errormodel}" -gt 0 ]]; then
-      VELOGP_ERRORMODEL="--error-model"
-    else
-      VELOGP_ERRORMODEL=""
-    fi
+    case "{velogp_errormodel}" in
+      True) VELOGP_ERRORMODEL=--error-model ;;
+      False) VELOGP_ERRORMODEL= ;;
+      *) echo "velogp_errormodel must be True or False, not '{velogp_errormodel}'" >&2; exit 1 ;;
+    esac
     if [[ "{origin_file}" != "" ]]; then
       VELOGP_ORIGIN_FILE=(--bed "{origin_file}")
     else
