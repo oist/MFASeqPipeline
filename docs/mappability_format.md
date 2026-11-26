@@ -29,7 +29,7 @@ skip them:
 
 ```
 # Command used to create this file:
-#   .../steps/mappability.py genome.fasta genome.fasta.bwaidx/index True 312 150 1 20  ...
+#   .../steps/mappability.py --genome genome.fasta --genome-index genome.fasta.bwaidx/index --circular --paired --fragment-length 312 --read-length 150 ...
 # Chromosomes:
 #   NC_000913.3: 4641652
 NC_000913.3	15387	16801

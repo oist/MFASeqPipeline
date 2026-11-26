@@ -49,10 +49,23 @@ mappability_step:
   override:
     step_memory_gb: '{memory_map_gb}'
   script: |
-    python3 {mfa_pipeline_dir}/steps/mappability.py "{genome_file}" "{genome_index_prefix}" "{genome_circular}" \
-      "$(grep read_length "{stats_file}" | cut -f 2)" \
-      "$(grep read_length "{stats_file}" | cut -f 2)" \
-      "{paired_end}" "{mapping_quality}" \
-      "{regions_file}" "{exclude_regions}" \
-      "{mappability_file}" \
-      -t {step_cores} -v 1
+    case "{genome_circular}" in
+      1|[Tt][Rr][Uu][Ee]|[Yy][Ee][Ss]) CIRCULAR_ARGS=(--circular) ;;
+      *) CIRCULAR_ARGS=() ;;
+    esac
+    REGIONS_ARGS=()
+    if [[ -n "{regions_file}" ]]; then
+      REGIONS_ARGS+=(--regions "{regions_file}")
+      if [[ -n "{exclude_regions}" ]]; then
+        REGIONS_ARGS+=(--exclude-regions "{exclude_regions}")
+      fi
+    fi
+    python3 {mfa_pipeline_dir}/steps/mappability.py \
+      --genome "{genome_file}" \
+      --genome-index "{genome_index_prefix}" \
+      "${{CIRCULAR_ARGS[@]}}" \
+      --read-length "$(grep read_length "{stats_file}" | cut -f 2)" \
+      --mapping-quality "{mapping_quality}" \
+      "${{REGIONS_ARGS[@]}}" \
+      --output "{mappability_file}" \
+      -- -t {step_cores} -v 1

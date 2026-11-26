@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 import io
 import subprocess
 import sys
@@ -18,27 +19,75 @@ def open_file(filename, mode):
     else:
         return open(filename, mode)
 
-# Command-line arguments
-GENOME = sys.argv[1]
-GENOME_INDEX = sys.argv[2]
-CIRCULAR = sys.argv[3].lower() in ["1", "true", "yes"]
-FRAGMENTLENGTH = int(sys.argv[4])
-READLENGTH = int(sys.argv[5])
-IS_PAIRED = sys.argv[6].lower() in ["1", "true", "yes"]
-MAPQ = int(sys.argv[7])
-REGIONS = sys.argv[8]
-EXCLUDE = sys.argv[9].split(",")
-DISPLACEMENT = 1
-OUTPUT = sys.argv[10]
-BWA_ARGS = sys.argv[11:]
-VERBOSE = False
+def nonempty(value: str) -> str:
+    if value == "":
+        raise argparse.ArgumentTypeError("must not be empty")
+    return value
 
-# For single-end reads, the fragment length is irrelevant: each simulated fragment
-# is a single read, so make the fragment length equal to the read length.
-if not IS_PAIRED:
-    if FRAGMENTLENGTH != READLENGTH:
-        print(f"Single-end reads, ignoring fragment length {FRAGMENTLENGTH} and simulating reads of length {READLENGTH}", file=sys.stderr)
-    FRAGMENTLENGTH = READLENGTH
+def positive(value: str) -> int:
+    try:
+        number = int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"invalid number '{value}'")
+    if number <= 0:
+        raise argparse.ArgumentTypeError(f"must be positive, got {number}")
+    return number
+
+def names(value: str) -> list:
+    return [ name for name in value.split(",") if name != "" ]
+
+# Command-line arguments
+PARSER = argparse.ArgumentParser(
+    description="Find the regions of a genome where reads cannot be mapped reliably, by simulating "
+                "a read or read pair at every position, mapping them with bwa mem, and checking "
+                "where they were mapped to. Arguments after -- are passed to bwa mem.")
+PARSER.add_argument("--genome", type=nonempty, required=True, metavar="FILE",
+                    help="genome sequences (FASTA)")
+PARSER.add_argument("--genome-index", type=nonempty, required=True, metavar="PREFIX",
+                    help="bwa index of the genome")
+PARSER.add_argument("--circular", action="store_true",
+                    help="sequences are circular, i.e. fragments may straddle the origin (default: linear)")
+PARSER.add_argument("--paired", action="store_true",
+                    help="reads are paired-end (default: single-end)")
+PARSER.add_argument("--fragment-length", type=positive, metavar="N",
+                    help="length of the simulated fragments (required with --paired, not allowed without)")
+PARSER.add_argument("--read-length", type=positive, required=True, metavar="N",
+                    help="length of the simulated reads")
+PARSER.add_argument("--mapping-quality", type=int, required=True, metavar="MAPQ",
+                    help="reads mapped with lower mapping quality count as not mappable")
+PARSER.add_argument("--regions", type=nonempty, metavar="FILE",
+                    help="regions (BED with names in the 4th column, optionally gzip- or bzip2-compressed) "
+                         "that can be excluded with --exclude-regions")
+PARSER.add_argument("--exclude-regions", type=names, default=[], metavar="NAMES",
+                    help="comma-separated names of regions from --regions to mark as non-mappable")
+PARSER.add_argument("--output", type=nonempty, required=True, metavar="FILE",
+                    help="BED file of non-mappable regions to write")
+PARSER.add_argument("--verbose", action="store_true",
+                    help="report how each simulated read was mapped")
+PARSER.add_argument("bwa_args", nargs="*", metavar="BWA_ARG",
+                    help="additional arguments for bwa mem, after --")
+ARGS = PARSER.parse_args()
+if ARGS.paired and ARGS.fragment_length is None:
+    PARSER.error("--fragment-length is required with --paired")
+if not ARGS.paired and ARGS.fragment_length is not None:
+    PARSER.error("--fragment-length is only allowed with --paired; for single-end reads, each simulated fragment is a read")
+if ARGS.exclude_regions and ARGS.regions is None:
+    PARSER.error("--exclude-regions requires --regions")
+
+GENOME = ARGS.genome
+GENOME_INDEX = ARGS.genome_index
+CIRCULAR = ARGS.circular
+READLENGTH = ARGS.read_length
+IS_PAIRED = ARGS.paired
+# For single-end reads, each simulated fragment is a single read
+FRAGMENTLENGTH = ARGS.fragment_length if IS_PAIRED else READLENGTH
+MAPQ = ARGS.mapping_quality
+REGIONS = ARGS.regions or ""
+EXCLUDE = ARGS.exclude_regions
+DISPLACEMENT = 1
+OUTPUT = ARGS.output
+BWA_ARGS = ARGS.bwa_args
+VERBOSE = ARGS.verbose
 
 # Read genome to find sequence length and create interval tree
 # containing mappable regions for each sequence
