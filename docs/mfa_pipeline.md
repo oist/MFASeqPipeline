@@ -225,7 +225,7 @@ its options are described in [velogp.md](https://github.com/oist/VeloGP/blob/mas
   `origin_of_replication`.
 * Other settings: `velogp_vt_cov`, `velogp_vt_timescale`, `velogp_vt_magnitude`
   (prior for v(t)); `velogp_vx_types`, `velogp_vx_names` (features for which delays
-  are estimated); `velogp_errormodel`; `velogp_seed`; `velogp_extra_args`.
+  are estimated), `velogp_vx_delayscale` (expected delay per feature, default `0.01`); `velogp_errormodel`; `velogp_seed`; `velogp_extra_args`.
   `velogp_suffix` is added to all output names and to the log name.
 * **Output** `velogp_abundance_file` (`{sample}.velogp.abd.gz`): observed and fitted
   abundance, see [fitted_abundance_format.md](https://github.com/oist/VeloGP/blob/master/docs/fitted_abundance_format.md).

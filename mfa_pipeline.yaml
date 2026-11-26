@@ -288,6 +288,7 @@ velogp_step:
       --columns "{velogp_abd_columns}" \
       --vx-feature-types "{velogp_vx_types}" \
       --vx-feature-names "{velogp_vx_names}" \
+      --vx-delayscale "{velogp_vx_delayscale}" \
       --vt-covariance "{velogp_vt_cov}" \
       --vt-timescale "{velogp_vt_timescale}" \
       --vt-magnitude "{velogp_vt_magnitude}" \
