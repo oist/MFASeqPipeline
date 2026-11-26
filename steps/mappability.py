@@ -182,17 +182,22 @@ for r in SeqIO.parse(GENOME, "fasta"):
             # necessary for the end point, though. Starting points left
             # of genome start produce the same fragments as starting points
             # at the very end of the genome.
-            # fragments as starting points at the very end in this case.
-            fend = (fstart + FRAGMENTLENGTH) % seqlength
             if (fstart < 0):
                 continue
+            # Wrap the (exclusive) end point into (0, seqlength], so a fragment
+            # ending exactly at the genome end gets fend = seqlength (not 0).
+            # For fragments straddling the origin, fend < fstart.
+            fend = fstart + FRAGMENTLENGTH
+            if fend > seqlength:
+                fend -= seqlength
+            flen = FRAGMENTLENGTH
         else:
             # Truncate fragments at genome boundaries
             fend = min(fstart + FRAGMENTLENGTH, seqlength)
             fstart = max(fstart, 0)
+            flen = fend - fstart
         # Generate reads
         # Ensure that the read length does not exceed the fragment length
-        flen = fend - fstart
         rlen = min(READLENGTH, flen)
         if fstart + rlen <= seqlength:
             # Read does not wrap around geome boundary
