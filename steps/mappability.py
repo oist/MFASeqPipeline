@@ -146,17 +146,19 @@ def read_alignments():
                 MAPABLE[rname_true].chop(0, fend)
             # Flag location to which the fragment was wrongly mapped as unmappable
             if IS_PAIRED and is_concordant:
-                # For concordant pairs, use the range between the two reads
+                # For concordant pairs, use the range between the two reads.
+                # |TLEN| is the number of bases from the leftmost mapped base
+                # to the rightmost one, i.e. the (half-open) range has length |TLEN|.
                 if tlen > 0:
-                    # First read, range extends tlen further bases
+                    # First read, range extends tlen bases from its start
                     if VERBOSE:
-                        print(f"        : WRONG TARGET: {rname}:{pos}-{pos+tlen+1} (left mate)", file=sys.stderr)
-                    MAPABLE[rname].chop(pos, pos + tlen + 1)
+                        print(f"        : WRONG TARGET: {rname}:{pos}-{pos+tlen} (left mate)", file=sys.stderr)
+                    MAPABLE[rname].chop(pos, pos + tlen)
                 elif tlen < 0:
-                    # Last read, range extends tlen bases from first
+                    # Last read, range extends -tlen bases from its mate's start
                     if VERBOSE:
-                        print(f"        : WRONG TARGET: {rname}:{pnext}-{pnext-tlen+1} (righ mate)", file=sys.stderr)
-                    MAPABLE[rname].chop(pnext, pnext + (-tlen) + 1)
+                        print(f"        : WRONG TARGET: {rname}:{pnext}-{pnext-tlen} (righ mate)", file=sys.stderr)
+                    MAPABLE[rname].chop(pnext, pnext - tlen)
             else:
                 # Otherwise, just use the range where the read mapped to
                 # Note: Technically, we should compute the length along the reference from the CIGAR,
