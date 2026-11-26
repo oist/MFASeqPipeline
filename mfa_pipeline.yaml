@@ -62,7 +62,7 @@ log_file: '{out_dir}/{target_label}.{step}{log_label}.log'
 log_label: ''
 read1_file: '{fastq_dir}/{sample}_r1.fastq.gz'
 read2_file: '{fastq_dir}/{sample}_r2.fastq.gz'
-paired_end: 1
+paired_end: True
 bam_file: '{out_dir}/{sample}.bam'
 bam_index_file: '{out_dir}/{sample}.bai'
 fastqc_html_file: '{out_dir}/{sample}_fastqc.html'
@@ -181,28 +181,23 @@ mappability_step:
     step_memory_gb: '{memory_map_gb}'
   script: |
     case "{genome_circular}" in
-      1|[Tt][Rr][Uu][Ee]|[Yy][Ee][Ss]) CIRCULAR_ARGS=(--circular) ;;
-      *) CIRCULAR_ARGS=() ;;
+      True) CIRCULAR=--circular ;;
+      False) CIRCULAR= ;;
+      *) echo "genome_circular must be True or False, not '{genome_circular}'" >&2; exit 1 ;;
     esac
     case "{paired_end}" in
-      1|[Tt][Rr][Uu][Ee]|[Yy][Ee][Ss]) PAIRED_ARGS=(--paired --fragment-length "$(grep insert_size "{stats_file}" | cut -f 2)") ;;
-      *) PAIRED_ARGS=() ;;
+      True) PAIRED="--paired --fragment-length $(grep insert_size "{stats_file}" | cut -f 2)" ;;
+      False) PAIRED= ;;
+      *) echo "paired_end must be True or False, not '{paired_end}'" >&2; exit 1 ;;
     esac
-    REGIONS_ARGS=()
-    if [[ -n "{regions_file}" ]]; then
-      REGIONS_ARGS+=(--regions "{regions_file}")
-      if [[ -n "{exclude_regions}" ]]; then
-        REGIONS_ARGS+=(--exclude-regions "{exclude_regions}")
-      fi
-    fi
     python3 {mfa_pipeline_dir}/steps/mappability.py \
       --genome "{genome_file}" \
       --genome-index "{genome_index_prefix}" \
-      "${{CIRCULAR_ARGS[@]}}" \
-      "${{PAIRED_ARGS[@]}}" \
+      $CIRCULAR $PAIRED \
       --read-length "$(grep read_length "{stats_file}" | cut -f 2)" \
       --mapping-quality "{mapping_quality}" \
-      "${{REGIONS_ARGS[@]}}" \
+      --regions "{regions_file}" \
+      --exclude-regions "{exclude_regions}" \
       --output "{mappability_file}" \
       -- -t {step_cores} -v 1
 abundance_step:
@@ -219,11 +214,11 @@ abundance_step:
     step_cores: 1
     log_label: '.w{windowsize}bp'
   script: |
-    if [[ "{paired_end}" == "1" || "{paired_end}" == "true" ]]; then
-      PAIRED_ARGS=(--paired)
-    else
-      PAIRED_ARGS=()
-    fi
+    case "{paired_end}" in
+      True) PAIRED=--paired ;;
+      False) PAIRED= ;;
+      *) echo "paired_end must be True or False, not '{paired_end}'" >&2; exit 1 ;;
+    esac
     if [[ -n "{reference_bam_file}" || -n "{reference_mappability_file}" ]]; then
       REFERENCE_ARGS=(--reference-bam "{reference_bam_file}" --reference-mappability "{reference_mappability_file}")
     else
@@ -233,7 +228,7 @@ abundance_step:
       --sample-bam "{bam_file}" \
       --sample-mappability "{mappability_file}" \
       "${{REFERENCE_ARGS[@]}}" \
-      "${{PAIRED_ARGS[@]}}" \
+      $PAIRED \
       --mapping-quality "{mapping_quality}" \
       --windowsize "{windowsize}" \
       --output "{abundance_file}"

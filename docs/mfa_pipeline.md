@@ -75,7 +75,7 @@ To run on a Slurm cluster, drop the `execute_cmd` and
 | `base_dir`, `project` | — / `ProjectName` | `project_dir` is `{base_dir}/{project}` |
 | `fastq_dir`, `meta_dir`, `out_dir` | `{project_dir}/fastq`, `/meta`, `/results` | Input reads, metadata, results |
 | `genome_file`, `gff_file`, `origin_file` | `{base_dir}/genome.fasta`, `.gff`, `origins.bed` | Reference genome, annotation, origin locations |
-| `genome_circular` | `True` | Whether chromosomes are circular |
+| `genome_circular` | `True` | Whether chromosomes are circular (`True` or `False`) |
 | `sample`, `reference` | — | Sample name and its reference sample; set per target |
 | `windowsize` | `10k` | Window size for abundances (`k` = ×1000) |
 | `mapping_quality` | `20` | Minimum mapping quality used for abundances and mappability |

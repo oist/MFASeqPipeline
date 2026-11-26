@@ -6,7 +6,7 @@ File: `mfa_se_pipeline.yaml` (`use: mfa_pipeline`). Paired-end variant:
 ## Summary
 
 `mfa_se_pipeline` is the **single-end** variant of [mfa_pipeline](mfa_pipeline.md).
-It sets `paired_end: 0`, reads one FASTQ file per sample, and replaces the `map`
+It sets `paired_end: False`, reads one FASTQ file per sample, and replaces the `map`
 and `mappability` steps. Everything else (settings, other steps, output formats)
 comes from `mfa_pipeline`, so that documentation applies unchanged. With
 single-end reads, the `abundance` step counts only the bases covered by each

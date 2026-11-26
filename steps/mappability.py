@@ -55,11 +55,11 @@ PARSER.add_argument("--read-length", type=positive, required=True, metavar="N",
                     help="length of the simulated reads")
 PARSER.add_argument("--mapping-quality", type=int, required=True, metavar="MAPQ",
                     help="reads mapped with lower mapping quality count as not mappable")
-PARSER.add_argument("--regions", type=nonempty, metavar="FILE",
+PARSER.add_argument("--regions", default="", metavar="FILE",
                     help="regions (BED with names in the 4th column, optionally gzip- or bzip2-compressed) "
-                         "that can be excluded with --exclude-regions")
+                         "that can be excluded with --exclude-regions (empty: none)")
 PARSER.add_argument("--exclude-regions", type=names, default=[], metavar="NAMES",
-                    help="comma-separated names of regions from --regions to mark as non-mappable")
+                    help="comma-separated names of regions from --regions to mark as non-mappable (empty: none)")
 PARSER.add_argument("--output", type=nonempty, required=True, metavar="FILE",
                     help="BED file of non-mappable regions to write")
 PARSER.add_argument("--verbose", action="store_true",
@@ -71,7 +71,7 @@ if ARGS.paired and ARGS.fragment_length is None:
     PARSER.error("--fragment-length is required with --paired")
 if not ARGS.paired and ARGS.fragment_length is not None:
     PARSER.error("--fragment-length is only allowed with --paired; for single-end reads, each simulated fragment is a read")
-if ARGS.exclude_regions and ARGS.regions is None:
+if ARGS.exclude_regions and ARGS.regions == "":
     PARSER.error("--exclude-regions requires --regions")
 
 GENOME = ARGS.genome
@@ -82,7 +82,7 @@ IS_PAIRED = ARGS.paired
 # For single-end reads, each simulated fragment is a single read
 FRAGMENTLENGTH = ARGS.fragment_length if IS_PAIRED else READLENGTH
 MAPQ = ARGS.mapping_quality
-REGIONS = ARGS.regions or ""
+REGIONS = ARGS.regions
 EXCLUDE = ARGS.exclude_regions
 DISPLACEMENT = 1
 OUTPUT = ARGS.output

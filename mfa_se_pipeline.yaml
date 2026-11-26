@@ -1,5 +1,5 @@
 read_file: '{fastq_dir}/{sample}.fastq.gz'
-paired_end: 0
+paired_end: False
 use:
   - mfa_pipeline
 map_step:
@@ -50,22 +50,17 @@ mappability_step:
     step_memory_gb: '{memory_map_gb}'
   script: |
     case "{genome_circular}" in
-      1|[Tt][Rr][Uu][Ee]|[Yy][Ee][Ss]) CIRCULAR_ARGS=(--circular) ;;
-      *) CIRCULAR_ARGS=() ;;
+      True) CIRCULAR=--circular ;;
+      False) CIRCULAR= ;;
+      *) echo "genome_circular must be True or False, not '{genome_circular}'" >&2; exit 1 ;;
     esac
-    REGIONS_ARGS=()
-    if [[ -n "{regions_file}" ]]; then
-      REGIONS_ARGS+=(--regions "{regions_file}")
-      if [[ -n "{exclude_regions}" ]]; then
-        REGIONS_ARGS+=(--exclude-regions "{exclude_regions}")
-      fi
-    fi
     python3 {mfa_pipeline_dir}/steps/mappability.py \
       --genome "{genome_file}" \
       --genome-index "{genome_index_prefix}" \
-      "${{CIRCULAR_ARGS[@]}}" \
+      $CIRCULAR \
       --read-length "$(grep read_length "{stats_file}" | cut -f 2)" \
       --mapping-quality "{mapping_quality}" \
-      "${{REGIONS_ARGS[@]}}" \
+      --regions "{regions_file}" \
+      --exclude-regions "{exclude_regions}" \
       --output "{mappability_file}" \
       -- -t {step_cores} -v 1
