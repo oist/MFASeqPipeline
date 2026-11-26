@@ -99,7 +99,7 @@ BWA = subprocess.Popen(
     shell=False, encoding="ASCII"
 )
 
-# Read alignment produced by BWA and remove non-mappable reagions
+# Read alignment produced by BWA and remove non-mappable regions
 # from the per-chromosome interval trees we keep in MAPABLE. Reading
 # alignment is done on a separate thread to avoid dead-lock issues.
 def process_alignments():
@@ -179,7 +179,7 @@ def process_alignments():
             else:
                 # Otherwise, just use the range where the read mapped to
                 # Note: Technically, we should compute the length along the reference from the CIGAR,
-                # but we just use the sequene length instead for simplicity
+                # but we just use the sequence length instead for simplicity
                 # Unmapped reads have no target to flag
                 if flag & is_unmapped == 0:
                     if VERBOSE:
@@ -230,19 +230,17 @@ def send_read(name, read):
 
 # Input synthetic reads to BWA
 for r in SeqIO.parse(GENOME, "fasta"):
-    # Start with whole sequence marked as mappable
     seq = r.seq
     seqname = r.id
     seqlength = len(r.seq)
-    # Loop over fragment starting points
+    # Loop over fragment starting points. Starting points left of the sequence
+    # start produce fragments truncated at the start of linear sequences.
     for fstart in range(-FRAGMENTLENGTH+1, seqlength, DISPLACEMENT):
-        # Mark whole sequence as mapable
         # Determine end point (exclusive)
         if CIRCULAR:
-            # Let fragments wrap around genome boundaries. Only
-            # necessary for the end point, though. Starting points left
-            # of genome start produce the same fragments as starting points
-            # at the very end of the genome.
+            # Let fragments straddle the origin. Starting points left of the
+            # sequence start produce the same fragments as starting points at
+            # the end of the sequence, so skip them.
             if (fstart < 0):
                 continue
             # Wrap the (exclusive) end point into (0, seqlength], so a fragment
@@ -253,7 +251,7 @@ for r in SeqIO.parse(GENOME, "fasta"):
                 fend -= seqlength
             flen = FRAGMENTLENGTH
         else:
-            # Truncate fragments at genome boundaries
+            # Truncate fragments at sequence boundaries
             fend = min(fstart + FRAGMENTLENGTH, seqlength)
             fstart = max(fstart, 0)
             flen = fend - fstart
@@ -261,7 +259,7 @@ for r in SeqIO.parse(GENOME, "fasta"):
         # Ensure that the read length does not exceed the fragment length
         rlen = min(READLENGTH, flen)
         if fstart + rlen <= seqlength:
-            # Read does not wrap around geome boundary
+            # Read does not wrap around genome boundary
             r1 = str(seq[fstart:(fstart+rlen)].upper())
         else:
             # Read wraps around genome boundaries
