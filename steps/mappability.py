@@ -137,7 +137,13 @@ def read_alignments():
             if VERBOSE:
                 print(f"MISMATCH: {rname}:{fstart}-{fend} mapped at {rname}:{pos} flag={flag} ({cigar}, {mapq})", file=sys.stderr)
                 print(f"        : WRONG SOURCE: {rname}:{fstart}-{fend}", file=sys.stderr)
-            MAPABLE[rname_true].chop(fstart, fend)
+            if fstart < fend:
+                MAPABLE[rname_true].chop(fstart, fend)
+            else:
+                # Fragment straddles the origin of a circular sequence, i.e. it
+                # covers [fstart, seqlength) and [0, fend)
+                MAPABLE[rname_true].chop(fstart, SEQLENGTHS[rname_true])
+                MAPABLE[rname_true].chop(0, fend)
             # Flag location to which the fragment was wrongly mapped as unmappable
             if IS_PAIRED and is_concordant:
                 # For concordant pairs, use the range between the two reads
