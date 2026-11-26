@@ -163,10 +163,33 @@ def ratio(sample: np.ndarray, ref: np.ndarray) -> np.ndarray:
     return tab
     
 
+def bam_seqlengths(bam):
+    # Read sequence lengths from BAM header
+    return { seq: length for seq, length in zip(bam.header.references, bam.header.lengths) }
+
+def check_seqlengths(sam_bamfile, ref_bamfile):
+    # Exit with an error if the sequences or sequence lengths of two BAM files disagree
+    with pysam.AlignmentFile(sam_bamfile, "rb") as bam:
+        sam_seqlengths = bam_seqlengths(bam)
+    with pysam.AlignmentFile(ref_bamfile, "rb") as bam:
+        ref_seqlengths = bam_seqlengths(bam)
+    if sam_seqlengths == ref_seqlengths:
+        return
+    print(f"ERROR: Sequences in the headers of sample BAM {sam_bamfile} and reference BAM {ref_bamfile} disagree",
+          file=sys.stderr)
+    for seq in sam_seqlengths.keys() - ref_seqlengths.keys():
+        print(f"  {seq} ({sam_seqlengths[seq]} bp) is missing from the reference BAM", file=sys.stderr)
+    for seq in ref_seqlengths.keys() - sam_seqlengths.keys():
+        print(f"  {seq} ({ref_seqlengths[seq]} bp) is missing from the sample BAM", file=sys.stderr)
+    for seq in sam_seqlengths.keys() & ref_seqlengths.keys():
+        if sam_seqlengths[seq] != ref_seqlengths[seq]:
+            print(f"  {seq} has length {sam_seqlengths[seq]} bp in the sample BAM but "
+                  f"{ref_seqlengths[seq]} bp in the reference BAM", file=sys.stderr)
+    sys.exit(1)
+
 def read_bam(bamfile, is_paired, mapq):
     with pysam.AlignmentFile(bamfile, "rb") as bam:
-        # Read sequence lengths from BAM header
-        seqlengths = { seq: length for seq, length in zip(bam.header.references, bam.header.lengths) }
+        seqlengths = bam_seqlengths(bam)
         # Create Coverage objects for all chromosomes
         cov = {seq: Coverage(length) for seq, length in seqlengths.items()}
         # Scan read pairs
@@ -232,6 +255,10 @@ if WINDOWSIZE.endswith("k"):
     WINDOWSIZE = int(WINDOWSIZE[0:-1]) * 1000
 else:
     WINDOWSIZE = int(WINDOWSIZE)
+
+# Check that sample and reference BAM refer to the same sequences before reading any reads
+if REF_BAM_FILE != "":
+    check_seqlengths(SAM_BAM_FILE, REF_BAM_FILE)
 
 # Read data
 PAIRED_DESC = "paired-end" if IS_PAIRED else "single-end"
