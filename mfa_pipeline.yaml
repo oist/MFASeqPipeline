@@ -263,9 +263,9 @@ velogp_step:
       VELOGP_ERRORMODEL=""
     fi
     if [[ "{origin_file}" != "" ]]; then
-      VELOGP_ORIGIN_FILE="--bed '{origin_file}'"
+      VELOGP_ORIGIN_FILE=(--bed "{origin_file}")
     else
-      VELOGP_ORIGIN_FILE=""
+      VELOGP_ORIGIN_FILE=()
     fi
     PYTHONPATH="{mfa_pipeline_dir}/steps/velogp" python -m velogp \
       --cores "{step_cores}" \
@@ -289,7 +289,7 @@ velogp_step:
       --perturbation-rejects "{velogp_perturbation_rejects}" \
       --perturbation-reduction "{velogp_perturbation_reduction}" \
       --perturbation-min "{velogp_perturbation_min}" \
-      ${{VELOGP_ORIGIN_FILE}} \
+      "${{VELOGP_ORIGIN_FILE[@]}}" \
       ${{VELOGP_ERRORMODEL}} \
       {velogp_extra_args} \
       "{abundance_file}"
