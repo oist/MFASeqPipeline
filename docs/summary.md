@@ -176,10 +176,7 @@ targets:
     - sample: s2
   exponential:                     # group as a dict
     override:                      # variables shared by all jobs below
-      steps:
-        - map
-        - mapstats
-        - abundance
+      steps: [ map, mapstats, abundance ]
     targets:                       # the group's own job list
       - {sample: e1, reference: s1}
       - {sample: e2, reference: s2}

@@ -147,12 +147,7 @@ A target can also be a **group** (a dictionary) that contains:
 targets:
   experiment:
     override:                       # applies to all jobs below
-      steps:
-        - map
-        - mapstats
-        - mappability
-        - abundance
-        - velogp
+      steps: [ map, mapstats, mappability, abundance, velogp ]
       windowsize: 5k
     stationary:
       - sample: stat1
