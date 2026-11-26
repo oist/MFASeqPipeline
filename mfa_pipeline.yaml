@@ -323,7 +323,6 @@ velomix_step:
     step_cores: 4
     log_label: '{velomix_suffix}'
   script: |
-    shopt -s nocasematch
     PYTHONPATH="{mfa_pipeline_dir}/steps/velogp" python -m velogp.velomix \
       --stall-sites "{velomix_stall_sites}" \
       --cores "{step_cores}" \

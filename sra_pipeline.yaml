@@ -19,7 +19,7 @@ fastq_step:
         set -e
         set -o pipefail
         
-        rm -f "{tmp_dir}/{accession}*.fastq"
+        rm -f "{tmp_dir}/{accession}"*.fastq
         fastq-dump --outdir "{tmp_dir}" --split-3 --log-level info -v -v "{sra_file}"
         
         if [[ -e "{tmp_dir}/{accession}.fastq" ]]; then
@@ -38,6 +38,6 @@ fastq_step:
             gzip -c < "{tmp_dir}/{accession}_2.fastq" > "{read2_file}"
             rm "{tmp_dir}/{accession}_2.fastq"
         else
-            echo "Moving {accession}_1.fastq to {read1_file}"
+            echo "Moving {accession}_2.fastq to {read2_file}"
             mv "{tmp_dir}/{accession}_2.fastq" "{read2_file}"
         fi

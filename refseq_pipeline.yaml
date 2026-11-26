@@ -14,7 +14,7 @@ genome_download_step:
         set -e
         
         cd "{tmp_dir}"
-        curl -X GET "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/{refseq}/download?include_annotation_type=GENOME_FASTA&include_annotation_type=GENOME_GFF&hydrated=FULLY_HYDRATED" \
+        curl --fail -X GET "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/{refseq}/download?include_annotation_type=GENOME_FASTA&include_annotation_type=GENOME_GFF&hydrated=FULLY_HYDRATED" \
              -H 'accept: application/zip' \
              -o ncbi_dataset.zip
         unzip ncbi_dataset.zip
@@ -33,7 +33,7 @@ genome_gbff_download_step:
         set -e
         
         cd "{tmp_dir}"
-        curl -X GET "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/{refseq}/download?include_annotation_type=GENOME_GBFF&hydrated=FULLY_HYDRATED" \
+        curl --fail -X GET "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/{refseq}/download?include_annotation_type=GENOME_GBFF&hydrated=FULLY_HYDRATED" \
              -H 'accept: application/zip' \
              -o ncbi_dataset.zip
         unzip ncbi_dataset.zip
@@ -50,7 +50,7 @@ genome_download_faonly_step:
         set -e
         
         cd "{tmp_dir}"
-        curl -X GET "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/{refseq}/download?include_annotation_type=GENOME_FASTA&include_annotation_type=GENOME_GFF&hydrated=FULLY_HYDRATED" \
+        curl --fail -X GET "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/{refseq}/download?include_annotation_type=GENOME_FASTA&include_annotation_type=GENOME_GFF&hydrated=FULLY_HYDRATED" \
              -H 'accept: application/zip' \
              -o ncbi_dataset.zip
         unzip ncbi_dataset.zip

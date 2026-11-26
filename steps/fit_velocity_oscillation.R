@@ -18,7 +18,7 @@ MODELS <- list(
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) {
   cat("fit_oscillation.R <genome> <model> <lambda> <abundance> <output> <cores>\n", file=stderr())
-  exit(1)
+  quit(status=1)
 }
 argi <- 1
 if (!(args[[argi]] %in% names(GENOMES)))
