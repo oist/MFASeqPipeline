@@ -130,31 +130,36 @@ def ratio(sample: np.ndarray, ref: np.ndarray) -> np.ndarray:
     # where CV[X] = STDDEV[X] / MEAN[X] denotes the coefficient of variation
     # 
     # This identity holds exactly only for Gamma-distributed random
-    # variables, but should hold approximately for any RV with short tails
+    # variables, but should hold approximately for any RV with short tails.
+    # The identity requires CV[Y]^2 < 1/2; for larger CV[Y], i.e. for very
+    # low reference counts, the standard error is undefined and set to nan.
+    # Similarly, the ratio is set to nan if the reference value is zero.
     # We compute the ratio of average coverage, startingpoints and endpoints
     # between sample and reference
+    def ratio_and_stderr(x, y, x_cv2, y_cv2):
+        with np.errstate(divide='ignore', invalid='ignore'):
+            q = np.where(y > 0, x / y, np.nan)
+            denom = 1 - 2 * y_cv2
+            q_cv2 = np.where(denom > 0, (x_cv2 + y_cv2 - x_cv2 * y_cv2) / denom, np.nan)
+            q_serr = q * np.sqrt(q_cv2)
+        q_serr[~np.isfinite(q_serr)] = np.nan
+        return q, q_serr
+
     cols = [('avg', np.float64), ('avg_serr', np.float64),
             ('sp', np.float64), ('sp_serr', np.float64),
             ('ep', np.float64), ('ep_serr', np.float64)]
     tab = np.zeros(sample.shape[0], dtype=cols)
+    with np.errstate(divide='ignore', invalid='ignore'):
+        avg_s_cv2 = (sample["serr"] / sample["avg"]) ** 2
+        avg_r_cv2 = (ref["serr"] / ref["avg"]) ** 2
+        sp_s_cv2, sp_r_cv2 = 1 / sample["sp"], 1 / ref["sp"]
+        ep_s_cv2, ep_r_cv2 = 1 / sample["ep"], 1 / ref["ep"]
     # Ratio of average coverages
-    tab["avg"] = sample["avg"] / ref["avg"]
-    s_cv2 = (sample["serr"] / sample["avg"]) ** 2
-    r_cv2 = (ref["serr"] / ref["avg"]) ** 2
-    q_cv2 = (s_cv2 + r_cv2 - s_cv2 * r_cv2) / (1 - 2 * r_cv2)
-    tab["avg_serr"] = tab["avg"] * np.sqrt(q_cv2)
+    tab["avg"], tab["avg_serr"] = ratio_and_stderr(sample["avg"], ref["avg"], avg_s_cv2, avg_r_cv2)
     # Ratio of startingpoints
-    tab["sp"] = sample["sp"] / ref["sp"]
-    s_cv2 = 1 / sample["sp"]
-    r_cv2 = 1 / ref["sp"]
-    q_cv2 = (s_cv2 + r_cv2 - s_cv2 * r_cv2) / (1 - 2 * r_cv2)
-    tab["sp_serr"] = tab["sp"] * np.sqrt(q_cv2)
+    tab["sp"], tab["sp_serr"] = ratio_and_stderr(sample["sp"], ref["sp"], sp_s_cv2, sp_r_cv2)
     # Ratio of endpoints
-    tab["ep"] = sample["ep"] / ref["ep"]
-    s_cv2 = 1 / sample["ep"]
-    r_cv2 = 1 / ref["ep"]
-    q_cv2 = (s_cv2 + r_cv2 - s_cv2 * r_cv2) / (1 - 2 * r_cv2)
-    tab["ep_serr"] = tab["ep"] * np.sqrt(q_cv2)
+    tab["ep"], tab["ep_serr"] = ratio_and_stderr(sample["ep"], ref["ep"], ep_s_cv2, ep_r_cv2)
     return tab
     
 
