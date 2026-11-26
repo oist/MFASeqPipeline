@@ -24,10 +24,15 @@ genecounts_step:
     # -a <file>: annotation file
     # -o <file>: output file
     # --tmpDir <dir>: directory for temp files
+    INSERT_SIZE="$(grep insert_size "{stats_file}" | cut -f 2)"
+    if ! [[ "$INSERT_SIZE" =~ ^[0-9]+$ && "$INSERT_SIZE" -gt 0 ]]; then
+      echo "no valid insert size in {stats_file} (got '$INSERT_SIZE'), are the reads paired-end?" >&2
+      exit 1
+    fi
     featureCounts -T {step_cores} \
       -p --countReadPairs -s 2 -Q 10 -B -C -P \
-      -d "$[$(grep insert_size "{stats_file}" | cut -f 2) / 5]" \
-      -D "$[$(grep insert_size "{stats_file}" | cut -f 2) * 5]" \
+      -d "$[$INSERT_SIZE / 5]" \
+      -D "$[$INSERT_SIZE * 5]" \
       -O \
       -F GTF -t gene -g ID -f --extraAttributes gene,gene_synonym,Dbxref,gene_biotype \
       -a "{gff_file}" \
