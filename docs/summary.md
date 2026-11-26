@@ -109,8 +109,8 @@ abundance_step:
   temp staging is enabled (see below). Scripts must therefore always refer to
   their files through these variables, never by reconstructing paths.
 * An input/output that expands to `''` is ignored — this is how optional files
-  are switched off (e.g. `mfa_no_reference.yaml` blanks the reference files;
-  `velogp_model_file: ''`).
+  are switched off (e.g. `mfa_no_reference.yaml` blanks the reference files,
+  and `origin_file` defaults to `''`).
 * **Skip rule:** a step is skipped iff *all* its (non-empty) outputs exist.
   There is no timestamp/staleness check; delete outputs to force a rerun.
   Consequence: **a step with no outputs is always skipped**.
@@ -160,8 +160,9 @@ clusters are not supported):
   engine copies them to their final location afterwards. Later steps of the same
   job read the temp copy. (Default in `mfa_pipeline.yaml`, for result storage
   that is read-only on compute nodes.)
-* The skip rule and the existence check after a step always use the canonical
-  paths.
+* The skip rule always uses the canonical paths. The existence check after a
+  step uses the temp copy of each output when `execute_copy_outputs` is set, and
+  the canonical path otherwise.
 * Both flags may also be set per step via `override`.
 
 ## 4. Targets and jobs
@@ -252,7 +253,7 @@ Everything else (`step_partition`, `step_cores`, `step_memory_gb`, `step_time`, 
 |---|---|
 | `mfa_pipeline.yaml` | main paired-end MFA-seq pipeline: variables and steps `genome_index`, `map`, `fastqc`, `mapstats`, `mappability`, `abundance`, `abundance_plot`, `velocity_oscillation`, `velogp`, `velomix` |
 | `mfa_se_pipeline.yaml` | single-end variant; `use: mfa_pipeline`, replaces `map`/`mappability`, `read_file`, `paired_end: False` |
-| `mfa_no_reference.yaml` | overlay that blanks the `reference_*` inputs |
+| `mfa_no_reference.yaml` | overlay for samples without a reference: blanks the `reference_*` inputs and adapts `velogp_abd_columns` and `abundance_plot_cmd` |
 | `rnaseq_pipeline.yaml` | `genecounts` step (featureCounts); no `use`, relies on `mfa_pipeline` variables |
 | `refseq_pipeline.yaml` | NCBI genome/GFF/GBFF download steps (`genome_download`, `genome_gbff_download`, `genome_download_faonly`) |
 | `sra_pipeline.yaml`, `sra_se_pipeline.yaml` | SRA download via `prefetch` + `fastq-dump` (`sra`, `fastq` steps) |

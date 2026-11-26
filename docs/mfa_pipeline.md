@@ -68,7 +68,8 @@ arubaito myproject genome reference growing
 
 Results go to `/data/myproject/results/`. For example,
 `exp.abd.w10kbp.gz` holds the abundances and `exp.velogp.vt.gz` the fitted fork
-speed over time. Each step writes a log file, `<sample>.<step>.log`, next to its results.
+speed over time. Each step writes a log file next to its results, e.g.
+`exp.mapstats.log` or, with the window size added, `exp.abundance.w10kbp.log`.
 To run on a Slurm cluster, drop the `execute_cmd` and
 `execute_copy_outputs` lines; the defaults submit each step with `srun`.
 
@@ -196,7 +197,8 @@ defined, in `steps/fit_velocity_oscillation.R`.
   `coverage_ratio_stderr`, `ratio_mappable`.
 * **Input** the growth rate `growthrate_perhour`, by default looked up in
   `growthrates_file`, see [growthrates_format.md](growthrates_format.md).
-* Settings: `genome_name`; `velocity_oscillation_model` (`vt`, `vx` or `vd`;
+* Settings: `genome_name`, which has no default and must be set, e.g.
+  `genome_name: EColiMG1655`; `velocity_oscillation_model` (`vt`, `vx` or `vd`;
   default `vt`).
 * **Output** `velocity_oscillation_file` (`{sample}.osc.{velocity_oscillation_model}.tab`):
   see [velocity_oscillation_format.md](velocity_oscillation_format.md).

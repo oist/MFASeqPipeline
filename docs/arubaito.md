@@ -198,7 +198,7 @@ execute_cmd: '{script_file}'
 To submit each step to a Slurm cluster (the default in `mfa_pipeline`):
 
 ```yaml
-execute_cmd: srun -p '{step_partition}' --job-name='{target_label}.{step}' --mem={step_memory_gb}G --time={step_time} -c {step_cores} {script_file}
+execute_cmd: srun -p '{step_partition}' --job-name='{target_label}.{step}{log_label}' --mem={step_memory_gb}G --time={step_time} -c {step_cores} {script_file}
 ```
 
 * The command must **wait** until the step has finished and return its exit
@@ -210,7 +210,9 @@ execute_cmd: srun -p '{step_partition}' --job-name='{target_label}.{step}' --mem
   asks for more memory.
 * Use `--jobs N` to have up to N cluster jobs running at once.
 * The step's output (stdout and stderr) is written to the file in `log_file`, by
-  default `{out_dir}/{target_label}.{step}.log`.
+  default `{out_dir}/{target_label}.{step}{log_label}.log`. `log_label` is empty
+  except for steps whose results depend on a setting, e.g. `abundance` sets it
+  to `.w{windowsize}bp`.
 * The software the steps need, e.g. the conda environment, must be available on
   the compute nodes. `srun` passes the current environment on by default.
 
@@ -237,6 +239,8 @@ memory:
 | `mappability` | `cores` | `memory_map_gb` |
 | `mapstats`, `abundance` | 1 | `memory_default_gb` |
 | `velogp`, `velomix` | 4 | `memory_default_gb` |
+| `sra`, `fastq` (sra pipelines) | 1 (`fastq` in `sra_pipeline2`: 2) | `memory_default_gb` |
+| `genome_download*` (refseq_pipeline) | 1 | 1 |
 | all other steps | `cores` | `memory_default_gb` |
 
 To adapt them to a cluster, set these settings in the project file, for a target,

@@ -167,7 +167,7 @@ Results are written to `/data/myproject/results/`. The main ones are:
 | `<sample>.mappability.bed` | Regions that cannot be mapped reliably |
 | `exp1.abd.w10kbp.gz` | Abundances in 10 kb windows, relative to `stat1` ([format](docs/abundance_format.md)) |
 | `exp1.velogp.vt.gz`, `.vt.pdf` | Fork velocity over time, estimated by VeloGP |
-| `<sample>.<step>.log` | Log of each step |
+| `<sample>.<step>.log` | Log of each step; `abundance` adds the window size, e.g. `exp1.abundance.w10kbp.log` |
 
 Steps whose outputs already exist are skipped, so you can rerun the same command
 after adding samples or fixing a failed step. To run on a Slurm cluster, remove
