@@ -66,8 +66,25 @@ if REGIONS != "":
                 print(f"Manually excluded region {name} lies on unknown sequence {chr}", file=sys.stderr)
 
 # Launch mapper
+# For paired reads, tell bwa the insert size distribution instead of letting it
+# infer one. All simulated fragments have the same length, so bwa would infer a
+# standard deviation of zero, which prevents it from using the mate to place reads
+# (e.g. within repeats). Inference can also make bwa accept other orientations
+# (e.g. outward-facing RF pairs, as produced by fragments spanning the end of a
+# circular sequence) as concordant; with -I, only FR pairs are.
+# The standard deviation is set to 15% of the mean to mimic the width of a real
+# insert size distribution, so that bwa is as uncertain about the placement of
+# pairs as it would be for real reads (e.g. for nearby repeat copies). bwa accepts
+# insert sizes within 4 standard deviations of the mean. Which pairs count as
+# correctly mapped is decided below, using the exact TLEN.
+# Note that bwa measures the insert size from the start of the forward read to the
+# last base of the reverse read, i.e. it is the fragment length minus one (whereas
+# the SAM TLEN equals the fragment length). BWA_ARGS come later, so they can
+# override this.
+BWA_INSERTSIZE = FRAGMENTLENGTH - 1
+BWA_PAIRED_ARGS = ["-I", f"{BWA_INSERTSIZE},{0.15 * BWA_INSERTSIZE:.1f}"] if IS_PAIRED else []
 BWA = subprocess.Popen(
-    ["bwa", "mem"] + BWA_ARGS + (["-p"] if IS_PAIRED else []) + [GENOME_INDEX, "-"],
+    ["bwa", "mem"] + BWA_PAIRED_ARGS + BWA_ARGS + (["-p"] if IS_PAIRED else []) + [GENOME_INDEX, "-"],
     stdin=subprocess.PIPE, stdout=subprocess.PIPE,
     shell=False, encoding="ASCII"
 )
@@ -91,10 +108,24 @@ def read_alignments():
         if m is None:
             raise RuntimeError(f"Unexpected read name: {qname}")
         rname_true, fstart, fend = m[1], int(m[2]), int(m[3])
+        # Determine whether the pair is concordant. bwa's proper-pair flag isn't
+        # enough: bwa accepts a range of insert sizes, but all simulated fragments
+        # have the same length, so a pair with any other insert size was mapped
+        # wrongly. Only accept FR pairs with exactly the expected TLEN, i.e.
+        # +FRAGMENTLENGTH for the forward and -FRAGMENTLENGTH for the reverse read.
+        # This also prevents the range between the reads, which is flagged below as
+        # the wrong target, from becoming arbitrarily large (e.g. for outward-facing
+        # pairs, or for supplementary alignments, which inherit the flag but whose
+        # TLEN is measured to the mate).
+        is_concordant = (flag & is_prop != 0)
+        if is_concordant and (tlen != (FRAGMENTLENGTH if flag & is_rev == 0 else -FRAGMENTLENGTH)):
+            if VERBOSE:
+                print(f"DISCORDANT: {qname} flagged as proper pair by bwa, but flag={flag} tlen={tlen}", file=sys.stderr)
+            is_concordant = False
         # Check if the read was mapped correctly
         is_wrong = (rname != rname_true) or (mapq < MAPQ) or (cigar != f"{len(seq)}M")
         if IS_PAIRED:
-            is_wrong = is_wrong or (flag & is_prop == 0)
+            is_wrong = is_wrong or not is_concordant
             if (flag & is_1st != 0):
                 is_wrong = is_wrong or (pos != fstart)
             elif (flag & is_2nd != 0):
@@ -108,8 +139,8 @@ def read_alignments():
                 print(f"        : WRONG SOURCE: {rname}:{fstart}-{fend}", file=sys.stderr)
             MAPABLE[rname_true].chop(fstart, fend)
             # Flag location to which the fragment was wrongly mapped as unmappable
-            if IS_PAIRED and (flag & is_prop != 0):
-                # For proper pairs, use the range between the two reads
+            if IS_PAIRED and is_concordant:
+                # For concordant pairs, use the range between the two reads
                 if tlen > 0:
                     # First read, range extends tlen further bases
                     if VERBOSE:
