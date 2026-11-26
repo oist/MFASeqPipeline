@@ -180,7 +180,7 @@ for r in SeqIO.parse(GENOME, "fasta"):
     seqname = r.id
     seqlength = len(r.seq)
     # Loop over fragment starting points
-    for fstart in range(-FRAGMENTLENGTH+1, seqlength-1, DISPLACEMENT):
+    for fstart in range(-FRAGMENTLENGTH+1, seqlength, DISPLACEMENT):
         # Mark whole sequence as mapable
         # Determine end point (exclusive)
         if CIRCULAR:
