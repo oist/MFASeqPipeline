@@ -33,6 +33,13 @@ OUTPUT = sys.argv[10]
 BWA_ARGS = sys.argv[11:]
 VERBOSE = False
 
+# For single-end reads, the fragment length is irrelevant: each simulated fragment
+# is a single read, so make the fragment length equal to the read length.
+if not IS_PAIRED:
+    if FRAGMENTLENGTH != READLENGTH:
+        print(f"Single-end reads, ignoring fragment length {FRAGMENTLENGTH} and simulating reads of length {READLENGTH}", file=sys.stderr)
+    FRAGMENTLENGTH = READLENGTH
+
 # Read genome to find sequence length and create interval tree
 # containing mappable regions for each sequence
 SEQLENGTHS = dict()
@@ -221,6 +228,10 @@ for r in SeqIO.parse(GENOME, "fasta"):
             # Read wraps around genome boundaries
             r1 = str(seq[fstart:seqlength].upper()) + \
                  str(seq[0:(fstart+rlen-seqlength)].upper())
+        if not IS_PAIRED:
+            # Single-end reads: the fragment is the read
+            print(f">{seqname}:{fstart}:{fend}\n{r1}", file=BWA.stdin)
+            continue
         if fend - rlen >= 0:
             # Read does not wrap around genome boundary
             r2 = str(seq[(fend-rlen):fend].reverse_complement().upper())
@@ -228,7 +239,7 @@ for r in SeqIO.parse(GENOME, "fasta"):
             # Read wraps around genome boundaries
             r2 = str(seq[0:fend].reverse_complement().upper()) + \
                  str(seq[(fend-rlen+seqlength):seqlength].reverse_complement().upper())
-        # Output read pair                 
+        # Output read pair
         print(f">{seqname}:{fstart}:{fend}/1\n{r1}", file=BWA.stdin)
         print(f">{seqname}:{fstart}:{fend}/2\n{r2}", file=BWA.stdin)
 

@@ -77,9 +77,9 @@ Maps single-end reads with `bwa mem`, then sorts and indexes the alignments.
 
 ### mappability
 
-Same as in `mfa_pipeline`, but the simulated fragments are single reads: both
-the fragment length and the read length are set to the median read length from
-`stats_file`.
+Same as in `mfa_pipeline`, but the simulated fragments are single reads of the
+median read length from `stats_file`. Each read is mapped once, and the
+fragment length plays no role.
 
 * **Input** `genome_file`, `genome_index_dir`, `regions_file`, `stats_file`.
 * **Output** `mappability_file` (`{sample}.mappability.bed`): see
