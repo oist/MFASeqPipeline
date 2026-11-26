@@ -79,8 +79,9 @@ To run on a Slurm cluster, drop the `execute_cmd` and
 | `sample`, `reference` | — | Sample name and its reference sample; set per target |
 | `windowsize` | `10k` | Window size for abundances (`k` = ×1000) |
 | `mapping_quality` | `20` | Minimum mapping quality used for abundances and mappability |
+| `partition_default` | `compute` | Slurm partition steps are submitted to |
 | `cores`, `memory_*_gb`, `time_default` | `32`, …, `1-0` | Resources requested per step |
-| `execute_cmd` | `srun -p compute …` | Executor; `'{script_file}'` runs steps locally |
+| `execute_cmd` | `srun -p '{step_partition}' …` | Executor; `'{script_file}'` runs steps locally |
 | `execute_copy_outputs` | `True` | Write outputs to `tmp_dir` first, then copy them to their final place |
 | `steps` | `genome_index` … `velocity_oscillation` | Default step list. It ends with the outdated `velocity_oscillation` and does not include `velogp`, so set `steps` explicitly |
 

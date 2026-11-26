@@ -51,6 +51,7 @@ velomix_perturbation_min: 0.01
 velomix_extra_args: ''
 windowsize: 10k
 mapping_quality: 20
+partition_default: compute
 cores: 32
 memory_map_gb: 32
 memory_sort_gb: 16
@@ -80,9 +81,10 @@ abundance_plot_cmd: |
 velocity_oscillation_file: '{out_dir}/{sample}.osc.{velocity_oscillation_model}.tab'
 target_label: '{sample}'
 shell: /bin/bash
-execute_cmd: srun -p compute --job-name='{target_label}.{step}{log_label}' --mem={step_memory_gb}G --time={step_time} -c {step_cores} {script_file}
+execute_cmd: srun -p '{step_partition}' --job-name='{target_label}.{step}{log_label}' --mem={step_memory_gb}G --time={step_time} -c {step_cores} {script_file}
 execute_copy_inputs: False
 execute_copy_outputs: True
+step_partition: '{partition_default}'
 step_cores: '{cores}'
 step_memory_gb: '{memory_default_gb}'
 step_time: '{time_default}'

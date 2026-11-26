@@ -23,7 +23,7 @@ does not define itself:
   step writes and `map` then reads. Only `mfa_se_pipeline` defines `read_file`;
   `mfa_pipeline` does not;
 * the settings every step needs to run: `shell`, `execute_cmd`, `tmp_dir`,
-  `log_file`, `step_cores`, `step_memory_gb` and `step_time`.
+  `log_file`, `step_partition`, `step_cores`, `step_memory_gb` and `step_time`.
 
 `sra_se_pipeline` and `mfa_se_pipeline` define no settings in common, so their
 order in `use` does not matter.

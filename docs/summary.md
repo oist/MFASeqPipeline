@@ -131,9 +131,9 @@ pipeline run locally or on an HPC cluster.
    engine waits for it to finish and treats a non-zero exit as failure.
    * Locally: `execute_cmd: '{script_file}'`.
    * On a Slurm cluster (default in `mfa_pipeline.yaml`):
-     `srun -p compute --job-name=... --mem={step_memory_gb}G --time={step_time} -c {step_cores} {script_file}`.
-     The per-step resource variables (`step_cores`, `step_memory_gb`,
-     `step_time`) exist for this purpose and are tuned via step `override`s.
+     `srun -p '{step_partition}' --job-name=... --mem={step_memory_gb}G --time={step_time} -c {step_cores} {script_file}`.
+     The per-step resource variables (`step_partition`, `step_cores`,
+     `step_memory_gb`, `step_time`) exist for this purpose and are tuned via step `override`s.
    * Because the script then runs on a compute node, `tmp_dir` (which holds the
      script file) must be visible from there.
 3. stdout/stderr go to `log_file` if defined (expanded per step; default in
@@ -246,7 +246,7 @@ list, and the arguments after it are rejected as "unrecognized arguments"
 | `log_file` | optional per-step log path |
 | `step`, `script_file`, `<name>_dir` | set automatically |
 
-Everything else (`step_cores`, `step_memory_gb`, `step_time`, `target_label`,
+Everything else (`step_partition`, `step_cores`, `step_memory_gb`, `step_time`, `target_label`,
 `log_label`, `sample`, `out_dir`, …) is pure convention of the pipeline YAMLs.
 
 ## 6. Bundled configuration files

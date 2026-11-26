@@ -203,16 +203,16 @@ execute_cmd: '{script_file}'
 To submit each step to a Slurm cluster (the default in `mfa_pipeline`):
 
 ```yaml
-execute_cmd: srun -p compute --job-name='{target_label}.{step}' --mem={step_memory_gb}G --time={step_time} -c {step_cores} {script_file}
+execute_cmd: srun -p '{step_partition}' --job-name='{target_label}.{step}' --mem={step_memory_gb}G --time={step_time} -c {step_cores} {script_file}
 ```
 
 * The command must **wait** until the step has finished and return its exit
   status, as `srun` does. arubaito then checks the outputs and starts the next
   step.
 * `execute_cmd` is expanded like a script, so it can use per-step variables. In
-  the pipelines, `step_cores`, `step_memory_gb` and `step_time` exist for this
-  purpose. Steps set them in their `override`; for example, `map` asks for more
-  memory.
+  the pipelines, `step_partition`, `step_cores`, `step_memory_gb` and `step_time`
+  exist for this purpose. Steps set them in their `override`; for example, `map`
+  asks for more memory.
 * Use `--jobs N` to have up to N cluster jobs running at once.
 * The step's output (stdout and stderr) is written to the file in `log_file`, by
   default `{out_dir}/{target_label}.{step}.log`.

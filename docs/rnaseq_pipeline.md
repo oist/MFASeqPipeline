@@ -20,7 +20,7 @@ only `genecounts_file` and the `genecounts` step. It is meant to be listed in
 * the file paths `bam_file`, `stats_file`, `genome_file`, `gff_file` and
   `out_dir` (from `base_dir` and `project`);
 * the settings every step needs to run: `shell`, `execute_cmd`, `tmp_dir`,
-  `log_file`, `step_cores`, `step_memory_gb` and `step_time`.
+  `log_file`, `step_partition`, `step_cores`, `step_memory_gb` and `step_time`.
 
 `rnaseq_pipeline` and `mfa_pipeline` define no settings in common, so their order
 in `use` does not matter. The MFA-specific steps of `mfa_pipeline` (`mappability`,

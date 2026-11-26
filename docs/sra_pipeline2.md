@@ -22,7 +22,7 @@ define itself:
 * the FASTQ paths `read1_file` and `read2_file` (from `fastq_dir`, `sample`,
   `base_dir` and `project`), which the `fastq` step writes and `map` then reads;
 * the settings every step needs to run: `shell`, `execute_cmd`, `tmp_dir`,
-  `log_file`, `step_cores`, `step_memory_gb` and `step_time`.
+  `log_file`, `step_partition`, `step_cores`, `step_memory_gb` and `step_time`.
 
 `sra_pipeline2` and `mfa_pipeline` define no settings in common, so their order
 in `use` does not matter.
