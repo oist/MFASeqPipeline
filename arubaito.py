@@ -94,6 +94,13 @@ def load_config(name):
             cfg = base
     return cfg
 
+# Return the value of a boolean setting, which must be True or False
+def cfg_bool(cfg, name, default=False):
+    value = cfg.get(name, default)
+    if not isinstance(value, bool):
+        raise ConfigurationError(f"{name} must be True or False, not '{value}'")
+    return value
+
 # Function to expand configuration settings
 def expand(value, cfg=CFG):
     if not isinstance(value, str):
@@ -326,8 +333,8 @@ def execute_job(job):
             
             # Check whether we should copy input files to tmp_dir and read from there,
             # and whether we should create ouputs in tmp_dir and copy from there
-            execute_copy_inputs = step_cfg["execute_copy_inputs"] if "execute_copy_inputs" in step_cfg else False
-            execute_copy_outputs = step_cfg["execute_copy_outputs"] if "execute_copy_outputs" in step_cfg else False
+            execute_copy_inputs = cfg_bool(step_cfg, "execute_copy_inputs")
+            execute_copy_outputs = cfg_bool(step_cfg, "execute_copy_outputs")
 
             # Map input directories to temp directories
             temp_file_dir_map = {}
