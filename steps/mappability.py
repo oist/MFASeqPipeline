@@ -129,7 +129,14 @@ def read_alignments():
             if (flag & is_1st != 0):
                 is_wrong = is_wrong or (pos != fstart)
             elif (flag & is_2nd != 0):
-                is_wrong = is_wrong or (pos != fend - READLENGTH)
+                # The second read covers the last rlen bases of the fragment. Compute
+                # rlen like the read generator does, i.e. reads are truncated if the
+                # fragment is shorter than READLENGTH. If fend <= fstart, the fragment
+                # straddles the origin of a circular sequence, and so may the read.
+                seqlength_true = SEQLENGTHS[rname_true]
+                flen = fend - fstart if fend > fstart else fend - fstart + seqlength_true
+                rlen = min(READLENGTH, flen)
+                is_wrong = is_wrong or (pos != (fend - rlen) % seqlength_true)
         else:
             is_wrong = is_wrong or (pos != fstart)
         if is_wrong:
