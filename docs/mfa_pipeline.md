@@ -83,7 +83,7 @@ To run on a Slurm cluster, drop the `execute_cmd` and
 | `cores`, `memory_*_gb`, `time_default` | `32`, …, `1-0` | Resources requested per step |
 | `execute_cmd` | `srun -p '{step_partition}' …` | Executor; `'{script_file}'` runs steps locally |
 | `execute_copy_outputs` | `True` | Write outputs to `tmp_dir` first, then copy them to their final place |
-| `steps` | `genome_index` … `velocity_oscillation` | Default step list. It ends with the outdated `velocity_oscillation` and does not include `velogp`, so set `steps` explicitly |
+| `steps` | `genome_index` … `velogp` | Default step list: `genome_index`, `map`, `fastqc`, `mapstats`, `mappability`, `abundance`, `velogp` |
 
 ## Steps
 

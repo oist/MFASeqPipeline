@@ -95,7 +95,7 @@ steps:
   - mapstats
   - mappability
   - abundance
-  - velocity_oscillation
+  - velogp
 genome_index_step:
   input:
     - genome_file
