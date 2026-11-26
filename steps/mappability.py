@@ -99,7 +99,7 @@ BWA = subprocess.Popen(
 # Read alignment produced by BWA and remove non-mappable reagions
 # from the per-chromosome interval trees we keep in MAPABLE. Reading
 # alignment is done on a separate thread to avoid dead-lock issues.
-def read_alignments():
+def process_alignments():
     qname_pattern = re.compile(r"^(.*):([0-9]*):([0-9]*)$")
     is_prop, is_unmapped, is_rev, is_1st, is_2nd = 0x2, 0x4, 0x10, 0x40, 0x80
     for line in BWA.stdout:
@@ -186,8 +186,44 @@ def read_alignments():
             if VERBOSE:
                 print(f"   MATCH: {rname}:{fstart}-{fend} mapped as {rname}:{pos} flag={flag} ({cigar})", file=sys.stderr)
             pass
+
+# Exceptions don't propagate from the reader thread to the main thread, so
+# store them for the main thread to report. Also kill bwa, otherwise bwa blocks
+# once its output isn't read anymore, and the main thread then blocks writing to
+# bwa's input. Killing bwa makes these writes fail instead.
+READER_ERROR = None
+def read_alignments():
+    global READER_ERROR
+    try:
+        process_alignments()
+    except BaseException as e:
+        READER_ERROR = e
+        BWA.kill()
 BWA_READER = threading.Thread(target=read_alignments, daemon=True)
 BWA_READER.start()
+
+# Close bwa's input, wait for bwa and the reader thread to finish, and fail
+# if either of them failed. Without this check, a failure of bwa would yield
+# incomplete results, e.g. an empty output (i.e. everything mappable).
+def finish_bwa():
+    try:
+        BWA.stdin.close()
+    except BrokenPipeError:
+        pass
+    BWA.wait()
+    BWA_READER.join()
+    if READER_ERROR is not None:
+        raise RuntimeError("Failed to process the alignments produced by bwa") from READER_ERROR
+    if BWA.returncode != 0:
+        raise RuntimeError(f"bwa mem failed with exit code {BWA.returncode}")
+
+# Send a read to bwa. If bwa stopped reading its input, find out why and fail.
+def send_read(name, read):
+    try:
+        print(f">{name}\n{read}", file=BWA.stdin)
+    except BrokenPipeError:
+        finish_bwa()
+        raise RuntimeError("bwa mem stopped reading its input unexpectedly")
 
 # Input synthetic reads to BWA
 for r in SeqIO.parse(GENOME, "fasta"):
@@ -230,7 +266,7 @@ for r in SeqIO.parse(GENOME, "fasta"):
                  str(seq[0:(fstart+rlen-seqlength)].upper())
         if not IS_PAIRED:
             # Single-end reads: the fragment is the read
-            print(f">{seqname}:{fstart}:{fend}\n{r1}", file=BWA.stdin)
+            send_read(f"{seqname}:{fstart}:{fend}", r1)
             continue
         if fend - rlen >= 0:
             # Read does not wrap around genome boundary
@@ -240,13 +276,11 @@ for r in SeqIO.parse(GENOME, "fasta"):
             r2 = str(seq[0:fend].reverse_complement().upper()) + \
                  str(seq[(fend-rlen+seqlength):seqlength].reverse_complement().upper())
         # Output read pair
-        print(f">{seqname}:{fstart}:{fend}/1\n{r1}", file=BWA.stdin)
-        print(f">{seqname}:{fstart}:{fend}/2\n{r2}", file=BWA.stdin)
+        send_read(f"{seqname}:{fstart}:{fend}/1", r1)
+        send_read(f"{seqname}:{fstart}:{fend}/2", r2)
 
 # Done producing reads, close input, wait for BWA and reader to finish
-BWA.stdin.close()
-BWA.wait()
-BWA_READER.join()
+finish_bwa()
 
 # Output non-mappable regions
 with open(OUTPUT, "w+", encoding="ASCII") as out:
