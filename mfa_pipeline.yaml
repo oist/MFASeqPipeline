@@ -7,7 +7,6 @@ meta_dir: '{project_dir}/meta'
 out_dir: '{project_dir}/results'
 genome_file: '{base_dir}/genome.fasta'
 gff_file: '{base_dir}/genome.gff'
-origin_file: '{base_dir}/origins.bed'
 genome_index_dir: '{genome_file}.bwaidx'
 genome_index_prefix: '{genome_index_dir}/index'
 genome_circular: True
