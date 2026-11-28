@@ -3,5 +3,5 @@ reference_bam_index_file: ''
 reference_mappability_file: ''
 velogp_abd_columns: 'seq,midpoint,sample_coverage_avg,sample_coverage_avg_stderr,sample_mappable'
 abundance_plot_cmd: |
-  plot "< zcat {abundance_file}" using "midpoint":((column("sample_mappable") >  0) ? column("sample_coverage_avg") : NaN) title "{sample} (well mappable windows)", \
-       "< zcat {abundance_file}" using "midpoint":((column("sample_mappable") == 0) ? column("sample_coverage_avg") : NaN) title "{sample} (badly mappable windows)";
+  plot "< gzip -dc {abundance_file}" using "midpoint":((column("sample_mappable") >  0) ? column("sample_coverage_avg") : NaN) title "{sample} (well mappable windows)", \
+       "< gzip -dc {abundance_file}" using "midpoint":((column("sample_mappable") == 0) ? column("sample_coverage_avg") : NaN) title "{sample} (badly mappable windows)";
