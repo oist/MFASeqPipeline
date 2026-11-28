@@ -16,7 +16,7 @@ map_step:
     set -o pipefail
     
     if [[ "{read_file}" == *.gz ]]; then
-      cat="zcat"
+      cat="gzip -dc"
     elif [[ "{read_file}" == *.bz2 ]]; then
       cat="bzcat"
     else
