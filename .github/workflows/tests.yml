@@ -1,0 +1,22 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # VeloGP (the steps/velogp submodule) is not needed, the tests replace it with a mock
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: tests/requirements.txt
+      - name: Install test dependencies
+        run: pip install -r tests/requirements.txt
+      - name: Run tests
+        run: pytest -n auto --durations=10
