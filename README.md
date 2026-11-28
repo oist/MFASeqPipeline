@@ -1,5 +1,7 @@
 # MFASeqPipeline
 
+[![Tests](https://github.com/oist/MFASeqPipeline/actions/workflows/tests.yml/badge.svg)](https://github.com/oist/MFASeqPipeline/actions/workflows/tests.yml)
+
 ## Overview
 
 `MFASeqPipeline` is a simple but flexible pipeline for analysing *marker
